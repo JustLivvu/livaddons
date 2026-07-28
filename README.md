@@ -1,4 +1,4 @@
-# LivAddons
+# LivAddons (This mod works only on Hypixel)
 
 **LivAddons** is a feature-packed client cosmetics mod for Minecraft (Fabric). It allows you to customize your display username with vibrant HEX color gradients, toggle text formatting (**Bold** / *Italic*), and dynamically adjust your character's visual height in real-time.
 
