@@ -20,7 +20,7 @@ All cosmetics are automatically synchronized and visible to any other players ru
 
 ## Commands
 
-- `/livaddons` — Opens the LivAddons GUI menu to edit your nickname, color gradient, font styles, and player height.
+- `/livaddons` - Opens the LivAddons GUI menu to edit your nickname, color gradient, font styles, and player height.
 
 ---
 
