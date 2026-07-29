@@ -9,9 +9,6 @@ import java.awt.Color;
 
 public class TextGradientUtil {
 
-    /**
-     * Tworzy płynnie sformatowany tekst (Component) z gradientem hex, wspierający spacje, symbole Unicode oraz pogrubienie/kursywę.
-     */
     public static MutableComponent buildGradientText(String input, String hexStart, String hexEnd, boolean isBold, boolean isItalic) {
         if (input == null || input.isEmpty()) {
             return Component.empty();
@@ -26,7 +23,6 @@ public class TextGradientUtil {
         for (int i = 0; i < length; i++) {
             char c = input.charAt(i);
 
-            // Obliczenie współczynnika gradientu
             float ratio = length > 1 ? (float) i / (float) (length - 1) : 0f;
 
             int red = (int) (colorStart.getRed() + ratio * (colorEnd.getRed() - colorStart.getRed()));

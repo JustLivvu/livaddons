@@ -40,6 +40,22 @@ public class ComponentReplacer {
         return result;
     }
 
+    public static Component replacePlayerName(Component original, PlayerCosmeticData data) {
+        if (original == null || data == null || data.username == null || data.username.isBlank()
+                || data.customNick == null || data.customNick.isBlank()) {
+            return original;
+        }
+
+        Component customNickComponent = TextGradientUtil.buildGradientText(
+                data.customNick,
+                data.colorStart,
+                data.colorEnd,
+                data.isBold,
+                data.isItalic
+        );
+        return replaceSubstring(original, data.username, customNickComponent);
+    }
+
     public static Component replaceSubstring(Component component, String target, Component replacement) {
         if (component == null || target == null || target.isEmpty()) return component;
         if (!component.getString().contains(target)) return component;

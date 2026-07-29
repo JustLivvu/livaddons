@@ -34,6 +34,8 @@ public class LivAddonsClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.level == null || client.player == null) return;
 
+            PlayerDataManager.getInstance().requestCosmeticDirectory();
+
             tickCounter++;
             if (tickCounter >= 40) {
                 tickCounter = 0;

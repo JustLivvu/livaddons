@@ -11,7 +11,10 @@ public class PlayerDataManager {
     private final Map<UUID, PlayerCosmeticData> cache = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastFetchTime = new ConcurrentHashMap<>();
     private final Set<UUID> pendingFetch = ConcurrentHashMap.newKeySet();
-    private static final long CACHE_TTL_MS = 15000; // 15 seconds
+    private volatile boolean directoryFetchPending;
+    private volatile long lastDirectoryFetchTime;
+    private static final long CACHE_TTL_MS = 15000;
+    private static final long DIRECTORY_TTL_MS = 30000;
 
     public static PlayerDataManager getInstance() {
         return INSTANCE;
@@ -75,6 +78,26 @@ public class PlayerDataManager {
                     lastFetchTime.put(u, fetchNow);
                 }
             }
+        });
+    }
+
+    public void requestCosmeticDirectory() {
+        long now = System.currentTimeMillis();
+        if (directoryFetchPending || now - lastDirectoryFetchTime < DIRECTORY_TTL_MS) {
+            return;
+        }
+
+        directoryFetchPending = true;
+        ApiClient.fetchAllProfiles().thenAccept(map -> {
+            if (map != null) {
+                cache.putAll(map);
+                long fetchNow = System.currentTimeMillis();
+                for (UUID uuid : map.keySet()) {
+                    lastFetchTime.put(uuid, fetchNow);
+                }
+            }
+            lastDirectoryFetchTime = System.currentTimeMillis();
+            directoryFetchPending = false;
         });
     }
 

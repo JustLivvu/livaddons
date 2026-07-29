@@ -105,6 +105,43 @@ public class ApiClient {
                 });
     }
 
+    public static CompletableFuture<Map<UUID, PlayerCosmeticData>> fetchAllProfiles() {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(getApiBaseUrl() + "/api/users/cosmetics"))
+                .GET()
+                .timeout(Duration.ofSeconds(10))
+                .build();
+
+        return HTTP_CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> {
+                    Map<UUID, PlayerCosmeticData> result = new HashMap<>();
+                    if (response.statusCode() != 200) {
+                        return result;
+                    }
+
+                    Type type = new TypeToken<Map<String, JsonObject>>(){}.getType();
+                    Map<String, JsonObject> map = GSON.fromJson(response.body(), type);
+                    if (map == null) {
+                        return result;
+                    }
+
+                    for (Map.Entry<String, JsonObject> entry : map.entrySet()) {
+                        try {
+                            UUID uuid = UUID.fromString(entry.getKey());
+                            PlayerCosmeticData data = parseProfile(entry.getValue().toString());
+                            if (data != null) {
+                                result.put(uuid, data);
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                    return result;
+                })
+                .exceptionally(ex -> {
+                    System.err.println("[LivAddons] Error fetching cosmetic directory: " + ex.getMessage());
+                    return Collections.emptyMap();
+                });
+    }
+
     // Register custom session with official Mojang Session Server.
     // Only the randomly generated serverId (not the accessToken) is sent to our backend.
     public static CompletableFuture<SyncResult> syncProfile(PlayerCosmeticData data) {

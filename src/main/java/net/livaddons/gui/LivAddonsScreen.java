@@ -230,7 +230,6 @@ public class LivAddonsScreen extends Screen {
 
         graphics.centeredText(this.font, Component.literal("§fLivAddons"), centerX, cardTop + 10, 0xFFFFFFFF);
 
-        // Links row: GitHub | Discord
         String githubLabel = "§nGitHub";
         String discordLabel = "§nDiscord";
         int githubTxtW = this.font.width("GitHub");
