@@ -4,6 +4,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,6 +94,43 @@ public final class TerminalWaypoints {
         }
         return boxes;
     }
+
+    public static List<HudLine> currentPhaseHud(Minecraft client) {
+        List<HudLine> lines = new ArrayList<>();
+        if (client.level == null || client.player == null) return lines;
+        int[][] ranges = {{0, 7}, {7, 14}, {14, 21}, {21, 28}};
+        int bestPhase = 0;
+        double bestDistance = Double.MAX_VALUE;
+        for (int phase = 0; phase < ranges.length; phase++) {
+            double distance = Double.MAX_VALUE;
+            for (int i = ranges[phase][0]; i < ranges[phase][1]; i++) {
+                Waypoint w = WAYPOINTS[i];
+                distance = Math.min(distance, client.player.distanceToSqr(w.x, w.y, w.z));
+            }
+            if (distance < bestDistance) { bestDistance = distance; bestPhase = phase; }
+        }
+        if (bestDistance > 10000) return lines;
+        for (int i = ranges[bestPhase][0]; i < ranges[bestPhase][1]; i++) {
+            Waypoint w = WAYPOINTS[i];
+            BlockPos pos = new BlockPos(w.x, w.y, w.z);
+            if (!client.level.hasChunkAt(pos)) {
+                lines.add(new HudLine(w.name, State.UNKNOWN));
+                continue;
+            }
+            boolean inactive = client.level.getEntitiesOfClass(ArmorStand.class,
+                    new net.minecraft.world.phys.AABB(w.x - 3, w.y - 3, w.z - 3,
+                            w.x + 3, w.y + 3, w.z + 3)).stream().anyMatch(stand -> {
+                Component name = stand.getCustomName();
+                return name != null && w.isInactive(name.getString().toLowerCase(Locale.ROOT));
+            });
+            lines.add(new HudLine(w.name, inactive ? State.PENDING : State.DONE));
+        }
+        lines.add(0, new HudLine("Phase " + (bestPhase + 1), State.HEADER));
+        return lines;
+    }
+
+    public enum State { HEADER, PENDING, DONE, UNKNOWN }
+    public record HudLine(String name, State state) {}
 
     private enum Type {
         TERMINAL, LEVER, DEVICE

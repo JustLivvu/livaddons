@@ -8,10 +8,12 @@
     "PlayerRendererMixin",
     "PlayerNametagMixin",
     "ChatComponentMixin",
+    "ChatScreenMixin",
     "ItemStackMixin",
     "PlayerTabOverlayMixin"
     ,"ArmorStandWaypointMixin",
-    "AbstractContainerScreenAccessor"
+    "AbstractContainerScreenAccessor",
+    "ScreenEffectRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

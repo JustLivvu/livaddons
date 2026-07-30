@@ -38,6 +38,9 @@ public class LivAddonsScreen extends Screen {
     private boolean cosmeticsEnabled;
     private boolean cosmeticsExpanded;
     private boolean melodyAlertExpanded;
+    private boolean clickGuiExpanded;
+    private boolean copyChatExpanded;
+    private int colorTarget;
     private boolean bold;
     private boolean italic;
     private float visualHeight = 1.0f;
@@ -181,6 +184,7 @@ public class LivAddonsScreen extends Screen {
             }
             if (event.button() == 1) {
                 cosmeticsExpanded = !cosmeticsExpanded;
+                if (cosmeticsExpanded) clickGuiExpanded = false;
                 updateWidgetVisibility();
                 return true;
             }
@@ -218,6 +222,61 @@ public class LivAddonsScreen extends Screen {
                 return true;
             }
         }
+        if (categories[2].open && matchesSearch("Terminals GUI")
+                && inside(mouseX, mouseY, floorX,
+                floorModuleY + 88 + (melodyAlertExpanded ? 36 : 0), panelWidth, 22)
+                && event.button() == 0) {
+            FeatureSettings.setTerminalsGuiEnabled(!FeatureSettings.terminalsGuiEnabled());
+            return true;
+        }
+
+        int generalX = categories[0].x;
+        int generalModuleY = categories[0].y + 24;
+        if (categories[0].open && matchesSearch("Copy Chat")
+                && inside(mouseX, mouseY, generalX, generalModuleY, panelWidth, 22)) {
+            if (event.button() == 0) {
+                FeatureSettings.setCopyChatEnabled(!FeatureSettings.copyChatEnabled());
+                return true;
+            }
+            if (event.button() == 1) {
+                copyChatExpanded = !copyChatExpanded;
+                return true;
+            }
+        }
+        if (categories[0].open && copyChatExpanded && event.button() == 0
+                && inside(mouseX, mouseY, generalX + 6, generalModuleY + 26, panelWidth - 12, 18)) {
+            FeatureSettings.setCopyChatMode((FeatureSettings.copyChatMode() + 1) % 3);
+            return true;
+        }
+
+        int renderX = categories[3].x;
+        int renderModuleY = categories[3].y + 24;
+        if (categories[3].open && matchesSearch("Disable Fire")
+                && inside(mouseX, mouseY, renderX, renderModuleY, panelWidth, 22)
+                && event.button() == 0) {
+            FeatureSettings.setDisableFireEnabled(!FeatureSettings.disableFireEnabled());
+            return true;
+        }
+
+        int miscModuleY = miscY() + 24;
+        int cosmeticsExtra = cosmeticsExpanded ? 234 : 0;
+        int clickGuiY = miscModuleY + 22 + cosmeticsExtra;
+        if (categories[4].open
+                && inside(mouseX, mouseY, miscX(), clickGuiY, panelWidth, 22)) {
+            if (event.button() == 1) {
+                clickGuiExpanded = !clickGuiExpanded;
+                updateWidgetVisibility();
+                return true;
+            }
+        }
+        int clickExtra = clickGuiExpanded ? 88 : 0;
+        int positionsY = clickGuiY + 22 + clickExtra;
+        if (categories[4].open
+                && inside(mouseX, mouseY, miscX(), positionsY, panelWidth, 22)
+                && event.button() == 0) {
+            Minecraft.getInstance().setScreen(new GuiPositionsScreen());
+            return true;
+        }
 
         if (categories[4].open && cosmeticsExpanded && event.button() == 0) {
             int controlX = miscX() + 6;
@@ -239,6 +298,23 @@ public class LivAddonsScreen extends Screen {
             if (inside(mouseX, mouseY, controlX, controlsY + 167, controlWidth, 18)) {
                 save();
                 return true;
+            }
+        }
+        if (categories[4].open && clickGuiExpanded && event.button() == 0) {
+            int xControl = miscX() + 6;
+            int yControl = clickGuiY + 26;
+            if (inside(mouseX, mouseY, xControl, yControl, panelWidth - 12, 18)) {
+                colorTarget = (colorTarget + 1) % 3;
+                return true;
+            }
+            for (int channel = 0; channel < 3; channel++) {
+                int sliderY = yControl + 22 + channel * 22;
+                if (inside(mouseX, mouseY, xControl, sliderY, panelWidth - 12, 18)) {
+                    int value = (int) Math.round(Math.max(0, Math.min(1,
+                            (mouseX - xControl) / (panelWidth - 12.0))) * 255);
+                    setSelectedColorChannel(channel, value);
+                    return true;
+                }
             }
         }
         return super.mouseClicked(event, consumed);
@@ -312,8 +388,8 @@ public class LivAddonsScreen extends Screen {
         int x = category.x;
         int y = category.y;
         boolean hover = inside(mouseX, mouseY, x, y, panelWidth, 24);
-        graphics.fill(x, y, x + panelWidth, y + 24, hover ? ACCENT_DARK : HEADER);
-        graphics.fill(x, y + 22, x + panelWidth, y + 24, ACCENT);
+        graphics.fill(x, y, x + panelWidth, y + 24, hover ? ACCENT_DARK : FeatureSettings.guiHeader());
+        graphics.fill(x, y + 22, x + panelWidth, y + 24, FeatureSettings.guiAccent());
         graphics.text(font, Component.literal(category.name).withStyle(ChatFormatting.BOLD),
                 x + 7, y + 8, 0xFFFFFFFF);
         graphics.text(font, Component.literal(category.open ? "-" : "+"),
@@ -321,46 +397,80 @@ public class LivAddonsScreen extends Screen {
 
         if (!category.open) return;
 
+        if (category.name.equals("General")) {
+            int moduleY = y + 24;
+            boolean enabled = FeatureSettings.copyChatEnabled();
+            graphics.fill(x, moduleY, x + panelWidth, moduleY + 22, ROW);
+            graphics.fill(x, moduleY, x + 2, moduleY + 22,
+                    enabled ? FeatureSettings.guiAccent() : 0xFF343640);
+            graphics.text(font, Component.literal("Copy Chat"), x + 7, moduleY + 8,
+                    enabled ? 0xFFFFFFFF : TEXT_MUTED);
+            graphics.text(font, Component.literal(copyChatExpanded ? "-" : "+"),
+                    x + panelWidth - 12, moduleY + 8, TEXT_MUTED);
+            if (copyChatExpanded) {
+                graphics.fill(x, moduleY + 22, x + panelWidth, moduleY + 48, FeatureSettings.guiBody());
+                renderButton(graphics, x + 6, moduleY + 26, panelWidth - 12, copyChatModeName());
+            }
+            return;
+        }
+
         if (category.name.equals("Floor 7")) {
             int moduleY = y + 24;
             boolean moduleHover = inside(mouseX, mouseY, x, moduleY, panelWidth, 22);
             boolean enabled = FeatureSettings.terminalWaypointsEnabled();
             graphics.fill(x, moduleY, x + panelWidth, moduleY + 22, moduleHover ? 0xFF22242D : ROW);
-            graphics.fill(x, moduleY, x + 2, moduleY + 22, enabled ? ACCENT : 0xFF343640);
+            graphics.fill(x, moduleY, x + 2, moduleY + 22, enabled ? FeatureSettings.guiAccent() : 0xFF343640);
             graphics.text(font, Component.literal("Terminal WPs"), x + 7, moduleY + 8,
                     enabled ? 0xFFFFFFFF : TEXT_MUTED);
             int solverY = moduleY + 22;
             boolean solverHover = inside(mouseX, mouseY, x, solverY, panelWidth, 22);
             boolean solverEnabled = FeatureSettings.terminalSolverEnabled();
             graphics.fill(x, solverY, x + panelWidth, solverY + 22, solverHover ? 0xFF22242D : ROW);
-            graphics.fill(x, solverY, x + 2, solverY + 22, solverEnabled ? ACCENT : 0xFF343640);
+            graphics.fill(x, solverY, x + 2, solverY + 22, solverEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
             graphics.text(font, Component.literal("Terminal Solver"), x + 7, solverY + 8,
                     solverEnabled ? 0xFFFFFFFF : TEXT_MUTED);
             int deviceY = solverY + 22;
             boolean deviceHover = inside(mouseX, mouseY, x, deviceY, panelWidth, 22);
             boolean deviceEnabled = FeatureSettings.deviceSolverEnabled();
             graphics.fill(x, deviceY, x + panelWidth, deviceY + 22, deviceHover ? 0xFF22242D : ROW);
-            graphics.fill(x, deviceY, x + 2, deviceY + 22, deviceEnabled ? ACCENT : 0xFF343640);
+            graphics.fill(x, deviceY, x + 2, deviceY + 22, deviceEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
             graphics.text(font, Component.literal("Device Solver"), x + 7, deviceY + 8,
                     deviceEnabled ? 0xFFFFFFFF : TEXT_MUTED);
             int melodyY = deviceY + 22;
             boolean melodyHover = inside(mouseX, mouseY, x, melodyY, panelWidth, 22);
             boolean melodyEnabled = FeatureSettings.melodyAlertEnabled();
             graphics.fill(x, melodyY, x + panelWidth, melodyY + 22, melodyHover ? 0xFF22242D : ROW);
-            graphics.fill(x, melodyY, x + 2, melodyY + 22, melodyEnabled ? ACCENT : 0xFF343640);
+            graphics.fill(x, melodyY, x + 2, melodyY + 22, melodyEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
             graphics.text(font, Component.literal("Melody Alert"), x + 7, melodyY + 8,
                     melodyEnabled ? 0xFFFFFFFF : TEXT_MUTED);
             graphics.text(font, Component.literal(melodyAlertExpanded ? "-" : "+"),
                     x + panelWidth - 12, melodyY + 8, TEXT_MUTED);
             if (melodyAlertExpanded) {
-                graphics.fill(x, melodyY + 22, x + panelWidth, melodyY + 58, BODY);
+                graphics.fill(x, melodyY + 22, x + panelWidth, melodyY + 58, FeatureSettings.guiBody());
                 graphics.text(font, Component.literal("Message"), x + 6, melodyY + 26, TEXT_MUTED);
             }
+            int terminalsY = melodyY + 22 + (melodyAlertExpanded ? 36 : 0);
+            boolean terminalsEnabled = FeatureSettings.terminalsGuiEnabled();
+            graphics.fill(x, terminalsY, x + panelWidth, terminalsY + 22, ROW);
+            graphics.fill(x, terminalsY, x + 2, terminalsY + 22,
+                    terminalsEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
+            graphics.text(font, Component.literal("Terminals GUI"), x + 7, terminalsY + 8,
+                    terminalsEnabled ? 0xFFFFFFFF : TEXT_MUTED);
             return;
         }
 
         if (!category.name.equals("Misc")) {
-            graphics.fill(x, y + 24, x + panelWidth, y + 44, BODY);
+            if (category.name.equals("Render")) {
+                int moduleY = y + 24;
+                boolean enabled = FeatureSettings.disableFireEnabled();
+                graphics.fill(x, moduleY, x + panelWidth, moduleY + 22, ROW);
+                graphics.fill(x, moduleY, x + 2, moduleY + 22,
+                        enabled ? FeatureSettings.guiAccent() : 0xFF343640);
+                graphics.text(font, Component.literal("Disable Fire"), x + 7, moduleY + 8,
+                        enabled ? 0xFFFFFFFF : TEXT_MUTED);
+                return;
+            }
+            graphics.fill(x, y + 24, x + panelWidth, y + 44, FeatureSettings.guiBody());
             graphics.centeredText(font, Component.literal("No modules"), x + panelWidth / 2,
                     y + 31, 0xFF555761);
             return;
@@ -369,14 +479,33 @@ public class LivAddonsScreen extends Screen {
         int moduleY = y + 24;
         boolean moduleHover = inside(mouseX, mouseY, x, moduleY, panelWidth, 22);
         graphics.fill(x, moduleY, x + panelWidth, moduleY + 22, moduleHover ? 0xFF22242D : ROW);
-        graphics.fill(x, moduleY, x + 2, moduleY + 22, cosmeticsEnabled ? ACCENT : 0xFF343640);
+        graphics.fill(x, moduleY, x + 2, moduleY + 22, cosmeticsEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
         graphics.text(font, Component.literal("Cosmetics"), x + 7, moduleY + 8,
                 cosmeticsEnabled ? 0xFFFFFFFF : TEXT_MUTED);
         graphics.text(font, Component.literal(cosmeticsExpanded ? "-" : "+"),
                 x + panelWidth - 12, moduleY + 8, TEXT_MUTED);
 
-        if (cosmeticsExpanded) {
-            graphics.fill(x, moduleY + 22, x + panelWidth, y + 280, BODY);
+        int cosmeticsExtra = cosmeticsExpanded ? 234 : 0;
+        if (cosmeticsExpanded)
+            graphics.fill(x, moduleY + 22, x + panelWidth, moduleY + 22 + cosmeticsExtra, FeatureSettings.guiBody());
+        int clickGuiY = moduleY + 22 + cosmeticsExtra;
+        graphics.fill(x, clickGuiY, x + panelWidth, clickGuiY + 22, ROW);
+        graphics.text(font, Component.literal("Click GUI"), x + 7, clickGuiY + 8, 0xFFFFFFFF);
+        graphics.text(font, Component.literal(clickGuiExpanded ? "-" : "+"),
+                x + panelWidth - 12, clickGuiY + 8, TEXT_MUTED);
+        int clickExtra = clickGuiExpanded ? 88 : 0;
+        int positionsY = clickGuiY + 22 + clickExtra;
+        graphics.fill(x, positionsY, x + panelWidth, positionsY + 22, ROW);
+        graphics.text(font, Component.literal("GUI Positions"), x + 7, positionsY + 8, 0xFFFFFFFF);
+        if (clickGuiExpanded) {
+            graphics.fill(x, clickGuiY + 22, x + panelWidth, clickGuiY + 22 + clickExtra, FeatureSettings.guiBody());
+            int controlY = clickGuiY + 26;
+            String target = switch (colorTarget) { case 1 -> "Header"; case 2 -> "Body"; default -> "Accent"; };
+            renderButton(graphics, x + 6, controlY, panelWidth - 12, target);
+            int color = selectedGuiColor();
+            renderRgbSlider(graphics, x + 6, controlY + 22, panelWidth - 12, "R", (color >> 16) & 255, 0xFFFF5555);
+            renderRgbSlider(graphics, x + 6, controlY + 44, panelWidth - 12, "G", (color >> 8) & 255, 0xFF55FF55);
+            renderRgbSlider(graphics, x + 6, controlY + 66, panelWidth - 12, "B", color & 255, 0xFF5599FF);
         }
     }
 
@@ -400,12 +529,12 @@ public class LivAddonsScreen extends Screen {
 
     private void renderToggle(GuiGraphicsExtractor graphics, int x, int y, int width, String label, boolean enabled) {
         graphics.fill(x, y, x + width, y + 18, enabled ? 0xFF372456 : 0xFF202128);
-        graphics.fill(x, y, x + 2, y + 18, enabled ? ACCENT : 0xFF4B4D58);
+        graphics.fill(x, y, x + 2, y + 18, enabled ? FeatureSettings.guiAccent() : 0xFF4B4D58);
         graphics.text(font, Component.literal(label), x + 6, y + 6,
                 enabled ? 0xFFFFFFFF : TEXT_MUTED);
         String state = enabled ? "ON" : "OFF";
         graphics.text(font, Component.literal(state), x + width - font.width(state) - 5, y + 6,
-                enabled ? ACCENT : 0xFF686A74);
+                enabled ? FeatureSettings.guiAccent() : 0xFF686A74);
     }
 
     private void renderSlider(GuiGraphicsExtractor graphics, int x, int y, int width) {
@@ -413,16 +542,61 @@ public class LivAddonsScreen extends Screen {
         int fillWidth = (int) Math.round(width * Math.max(0, Math.min(1, progress)));
         graphics.fill(x, y, x + width, y + 18, 0xFF202128);
         graphics.fill(x, y + 16, x + width, y + 18, 0xFF363842);
-        graphics.fill(x, y + 16, x + fillWidth, y + 18, ACCENT);
+        graphics.fill(x, y + 16, x + fillWidth, y + 18, FeatureSettings.guiAccent());
         graphics.text(font, Component.literal(String.format("Scale %.2fx", visualHeight)),
                 x + 6, y + 6, 0xFFD8D9DF);
     }
 
+    private int selectedGuiColor() {
+        return switch (colorTarget) {
+            case 1 -> FeatureSettings.guiHeader();
+            case 2 -> FeatureSettings.guiBody();
+            default -> FeatureSettings.guiAccent();
+        };
+    }
+
+    private void setSelectedColorChannel(int channel, int value) {
+        int color = selectedGuiColor();
+        int red = (color >> 16) & 255;
+        int green = (color >> 8) & 255;
+        int blue = color & 255;
+        if (channel == 0) red = value;
+        else if (channel == 1) green = value;
+        else blue = value;
+
+        String changed = String.format("#%02X%02X%02X", red, green, blue);
+        String accent = FeatureSettings.colorHex(FeatureSettings.guiAccent());
+        String header = FeatureSettings.colorHex(FeatureSettings.guiHeader());
+        String body = FeatureSettings.colorHex(FeatureSettings.guiBody());
+        switch (colorTarget) {
+            case 1 -> FeatureSettings.setGuiColors(accent, changed, body);
+            case 2 -> FeatureSettings.setGuiColors(accent, header, changed);
+            default -> FeatureSettings.setGuiColors(changed, header, body);
+        }
+    }
+
+    private void renderRgbSlider(GuiGraphicsExtractor graphics, int x, int y, int width,
+                                 String label, int value, int sliderColor) {
+        int fillWidth = (int) Math.round(width * (value / 255.0));
+        graphics.fill(x, y, x + width, y + 18, 0xFF202128);
+        graphics.fill(x, y + 15, x + width, y + 18, 0xFF363842);
+        graphics.fill(x, y + 15, x + fillWidth, y + 18, sliderColor);
+        graphics.text(font, Component.literal(label + "  " + value), x + 6, y + 6, 0xFFFFFFFF);
+    }
+
     private void renderButton(GuiGraphicsExtractor graphics, int x, int y, int width, String label) {
         graphics.fill(x, y, x + width, y + 18, syncing ? 0xFF383943 : ACCENT_DARK);
-        graphics.fill(x, y, x + width, y + 1, syncing ? 0xFF555762 : ACCENT);
+        graphics.fill(x, y, x + width, y + 1, syncing ? 0xFF555762 : FeatureSettings.guiAccent());
         graphics.centeredText(font, Component.literal(syncing ? "Syncing..." : label),
                 x + width / 2, y + 6, syncing ? TEXT_MUTED : 0xFFFFFFFF);
+    }
+
+    private String copyChatModeName() {
+        return switch (FeatureSettings.copyChatMode()) {
+            case 1 -> "Shift + Left Click";
+            case 2 -> "Right Click";
+            default -> "Left Click";
+        };
     }
 
     private boolean matchesSearch(String moduleName) {

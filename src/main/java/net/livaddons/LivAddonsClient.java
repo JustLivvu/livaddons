@@ -11,6 +11,8 @@ import net.livaddons.feature.TerminalWaypoints;
 import net.livaddons.feature.DeviceSolver;
 import net.livaddons.feature.WorldBoxRenderer;
 import net.livaddons.feature.MelodyAlert;
+import net.livaddons.feature.FeatureSettings;
+import net.livaddons.feature.TerminalsHud;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.Minecraft;
@@ -27,6 +29,8 @@ public class LivAddonsClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         System.out.println("[LivAddons] Initializing LivAddons Client...");
+        FeatureSettings.load();
+        TerminalsHud.register();
         WorldBoxRenderer.register();
 
         ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
