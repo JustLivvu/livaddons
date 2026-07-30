@@ -110,6 +110,7 @@ public class LivAddonsScreen extends Screen {
                 220, 20, Component.literal("Search modules"));
         searchField.setMaxLength(24);
         searchField.setHint(Component.literal("Search modules..."));
+        searchField.setResponder(value -> updateWidgetVisibility());
         addRenderableWidget(searchField);
 
         updateWidgetVisibility();
@@ -144,11 +145,11 @@ public class LivAddonsScreen extends Screen {
     }
 
     private void updateWidgetVisibility() {
-        boolean visible = categories[4].open && cosmeticsExpanded;
+        boolean visible = !isSearching() && categories[4].open && cosmeticsExpanded;
         nickField.visible = visible;
         startColorField.visible = visible;
         endColorField.visible = visible;
-        melodyMessageField.visible = categories[2].open && melodyAlertExpanded;
+        melodyMessageField.visible = !isSearching() && categories[2].open && melodyAlertExpanded;
     }
 
     @Override
@@ -171,6 +172,22 @@ public class LivAddonsScreen extends Screen {
                     return true;
                 }
             }
+        }
+
+        if (isSearching()) {
+            for (Category category : categories) {
+                if (!category.open) continue;
+                int resultY = category.y + 24;
+                for (String module : modulesFor(category.name)) {
+                    if (!matchesSearch(module)) continue;
+                    if (inside(mouseX, mouseY, category.x, resultY, panelWidth, 22)) {
+                        if (event.button() == 0) activateSearchResult(module);
+                        return true;
+                    }
+                    resultY += 22;
+                }
+            }
+            return super.mouseClicked(event, consumed);
         }
 
         int x = miscX();
@@ -397,6 +414,29 @@ public class LivAddonsScreen extends Screen {
 
         if (!category.open) return;
 
+        if (isSearching()) {
+            int resultY = y + 24;
+            boolean found = false;
+            for (String module : modulesFor(category.name)) {
+                if (!matchesSearch(module)) continue;
+                found = true;
+                boolean enabled = moduleEnabled(module);
+                boolean rowHover = inside(mouseX, mouseY, x, resultY, panelWidth, 22);
+                graphics.fill(x, resultY, x + panelWidth, resultY + 22, rowHover ? 0xFF22242D : ROW);
+                graphics.fill(x, resultY, x + 2, resultY + 22,
+                        enabled ? FeatureSettings.guiAccent() : 0xFF343640);
+                graphics.text(font, Component.literal(displayModuleName(module)), x + 7, resultY + 8,
+                        enabled ? 0xFFFFFFFF : TEXT_MUTED);
+                resultY += 22;
+            }
+            if (!found) {
+                graphics.fill(x, y + 24, x + panelWidth, y + 44, FeatureSettings.guiBody());
+                graphics.centeredText(font, Component.literal("No results"), x + panelWidth / 2,
+                        y + 31, 0xFF555761);
+            }
+            return;
+        }
+
         if (category.name.equals("General")) {
             int moduleY = y + 24;
             boolean enabled = FeatureSettings.copyChatEnabled();
@@ -602,6 +642,66 @@ public class LivAddonsScreen extends Screen {
     private boolean matchesSearch(String moduleName) {
         return searchField == null || searchField.getValue().isBlank()
                 || moduleName.toLowerCase().contains(searchField.getValue().trim().toLowerCase());
+    }
+
+    private boolean isSearching() {
+        return searchField != null && !searchField.getValue().trim().isEmpty();
+    }
+
+    private String[] modulesFor(String category) {
+        return switch (category) {
+            case "General" -> new String[]{"Copy Chat"};
+            case "Floor 7" -> new String[]{"Terminal Waypoints", "Terminal Solver", "Device Solver",
+                    "Melody Alert", "Terminals GUI"};
+            case "Render" -> new String[]{"Disable Fire"};
+            case "Misc" -> new String[]{"Cosmetics", "Click GUI", "GUI Positions"};
+            default -> new String[0];
+        };
+    }
+
+    private String displayModuleName(String module) {
+        return module.equals("Terminal Waypoints") ? "Terminal WPs" : module;
+    }
+
+    private boolean moduleEnabled(String module) {
+        return switch (module) {
+            case "Copy Chat" -> FeatureSettings.copyChatEnabled();
+            case "Terminal Waypoints" -> FeatureSettings.terminalWaypointsEnabled();
+            case "Terminal Solver" -> FeatureSettings.terminalSolverEnabled();
+            case "Device Solver" -> FeatureSettings.deviceSolverEnabled();
+            case "Melody Alert" -> FeatureSettings.melodyAlertEnabled();
+            case "Terminals GUI" -> FeatureSettings.terminalsGuiEnabled();
+            case "Disable Fire" -> FeatureSettings.disableFireEnabled();
+            case "Cosmetics" -> cosmeticsEnabled;
+            default -> true;
+        };
+    }
+
+    private void activateSearchResult(String module) {
+        switch (module) {
+            case "Copy Chat" -> FeatureSettings.setCopyChatEnabled(!FeatureSettings.copyChatEnabled());
+            case "Terminal Waypoints" ->
+                    FeatureSettings.setTerminalWaypointsEnabled(!FeatureSettings.terminalWaypointsEnabled());
+            case "Terminal Solver" ->
+                    FeatureSettings.setTerminalSolverEnabled(!FeatureSettings.terminalSolverEnabled());
+            case "Device Solver" -> FeatureSettings.setDeviceSolverEnabled(!FeatureSettings.deviceSolverEnabled());
+            case "Melody Alert" -> FeatureSettings.setMelodyAlertEnabled(!FeatureSettings.melodyAlertEnabled());
+            case "Terminals GUI" -> FeatureSettings.setTerminalsGuiEnabled(!FeatureSettings.terminalsGuiEnabled());
+            case "Disable Fire" -> FeatureSettings.setDisableFireEnabled(!FeatureSettings.disableFireEnabled());
+            case "Cosmetics" -> {
+                cosmeticsEnabled = !cosmeticsEnabled;
+                PlayerDataManager.getInstance().setCosmeticsVisible(cosmeticsEnabled);
+            }
+            case "Click GUI" -> {
+                searchField.setValue("");
+                clickGuiExpanded = true;
+                cosmeticsExpanded = false;
+                updateWidgetVisibility();
+            }
+            case "GUI Positions" -> Minecraft.getInstance().setScreen(new GuiPositionsScreen());
+            default -> {
+            }
+        }
     }
 
     private void repositionSettingFields() {
