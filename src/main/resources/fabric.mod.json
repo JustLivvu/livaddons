@@ -3,13 +3,14 @@
   "id": "livaddons",
   "name": "LivAddons",
   "version": "${version}",
-  "description": "LivAddons is a cosmetics mod created for Hypixel SkyBlock. It lets you customize your display username, change colors and styles, and adjust your character’s height. All cosmetics are visible to other players who also use the LivAddons mod.",
+  "description": "A Hypixel SkyBlock dungeon utility mod designed to improve the overall gameplay experience with helpful quality-of-life features, extensive customization, and player cosmetics.",
   "authors": [
     "Liv"
   ],
   "contact": {
-    "homepage": "https://github.com/justlivvy/livaddons",
-    "sources": "https://github.com/justlivvy/livaddons"
+    "homepage": "https://github.com/justlivvu/livaddons",
+    "sources": "https://github.com/justlivvu/livaddons",
+    "issues": "https://github.com/justlivvu/livaddons/issues"
   },
   "license": "MIT",
   "icon": "assets/livaddons/icon.webp",
