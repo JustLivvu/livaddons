@@ -6,6 +6,13 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.livaddons.data.PlayerDataManager;
 import net.livaddons.gui.LivAddonsScreen;
+import net.livaddons.feature.TerminalSolver;
+import net.livaddons.feature.TerminalWaypoints;
+import net.livaddons.feature.DeviceSolver;
+import net.livaddons.feature.WorldBoxRenderer;
+import net.livaddons.feature.MelodyAlert;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 
@@ -20,6 +27,15 @@ public class LivAddonsClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         System.out.println("[LivAddons] Initializing LivAddons Client...");
+        WorldBoxRenderer.register();
+
+        ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+            MelodyAlert.onScreenOpened(client, screen);
+            if (screen instanceof AbstractContainerScreen<?> containerScreen) {
+                ScreenEvents.afterExtract(screen).register((ignored, graphics, mouseX, mouseY, delta) ->
+                        TerminalSolver.render(containerScreen, graphics));
+            }
+        });
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             dispatcher.register(ClientCommands.literal("livaddons")
@@ -35,6 +51,7 @@ public class LivAddonsClient implements ClientModInitializer {
             if (client.level == null || client.player == null) return;
 
             PlayerDataManager.getInstance().requestCosmeticDirectory();
+            DeviceSolver.tick(client);
 
             tickCounter++;
             if (tickCounter >= 40) {

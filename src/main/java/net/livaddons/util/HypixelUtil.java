@@ -14,7 +14,9 @@ public class HypixelUtil {
         ServerData server = client.getCurrentServer();
         if (server != null && server.ip != null) {
             String ip = server.ip.toLowerCase(Locale.ROOT);
-            return ip.contains("hypixel.net") || ip.contains("hypixel");
+            return ip.contains("hypixel.net")
+                    || ip.contains("hypixel")
+                    || ip.contains("p3sim.net");
         }
         return false;
     }

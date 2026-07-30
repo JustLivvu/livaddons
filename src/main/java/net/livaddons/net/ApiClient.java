@@ -195,7 +195,12 @@ public class ApiClient {
                 } else if (response.statusCode() == 401) {
                     return new SyncResult(false, "Mojang session verification failed (401)");
                 } else {
-                    return new SyncResult(false, "Server error (" + response.statusCode() + ")");
+                    String body = response.body() == null ? "" : response.body().trim();
+                    if (body.length() > 120) body = body.substring(0, 120);
+                    System.err.println("[LivAddons] Sync server response "
+                            + response.statusCode() + ": " + body);
+                    return new SyncResult(false, "Server error (" + response.statusCode()
+                            + ")" + (body.isEmpty() ? "" : ": " + body));
                 }
             } catch (Exception ex) {
                 System.err.println("[LivAddons] Error syncing profile: " + ex.getMessage());

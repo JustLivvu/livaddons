@@ -13,6 +13,7 @@ public class PlayerDataManager {
     private final Set<UUID> pendingFetch = ConcurrentHashMap.newKeySet();
     private volatile boolean directoryFetchPending;
     private volatile long lastDirectoryFetchTime;
+    private volatile boolean cosmeticsVisible = true;
     private static final long CACHE_TTL_MS = 15000;
     private static final long DIRECTORY_TTL_MS = 30000;
 
@@ -21,8 +22,21 @@ public class PlayerDataManager {
     }
 
     public PlayerCosmeticData getCosmeticData(UUID uuid) {
+        if (!cosmeticsVisible) return null;
+        return getCachedCosmeticData(uuid);
+    }
+
+    public PlayerCosmeticData getCachedCosmeticData(UUID uuid) {
         if (uuid == null) return null;
         return cache.get(uuid);
+    }
+
+    public boolean areCosmeticsVisible() {
+        return cosmeticsVisible;
+    }
+
+    public void setCosmeticsVisible(boolean visible) {
+        cosmeticsVisible = visible;
     }
 
     public void updateCache(PlayerCosmeticData data) {
@@ -102,6 +116,6 @@ public class PlayerDataManager {
     }
 
     public Collection<PlayerCosmeticData> getAllCosmeticData() {
-        return cache.values();
+        return cosmeticsVisible ? cache.values() : Collections.emptyList();
     }
 }
