@@ -20,12 +20,18 @@ public final class WorldBoxRenderer {
             List<RenderBox> boxes = new ArrayList<>();
             boxes.addAll(TerminalWaypoints.collectBoxes(client));
             boxes.addAll(DeviceSolver.getRenderBoxes());
+            boxes.addAll(DungeonHighlights.collectBoxes(client));
             try (var ignored = context.levelRenderer().collectPerFrameGizmos()) {
                 for (RenderBox box : boxes) {
                     int rgb = box.color() & 0x00FFFFFF;
                     int stroke = 0xFF000000 | rgb;
                     int fill = 0x48000000 | rgb;
-                    Gizmos.cuboid(box.bounds(), GizmoStyle.strokeAndFill(stroke, 2.0f, fill));
+                    GizmoStyle style = switch (box.style()) {
+                        case FILLED -> GizmoStyle.fill(fill);
+                        case OUTLINE -> GizmoStyle.stroke(stroke, 2.0f);
+                        case FILLED_OUTLINE -> GizmoStyle.strokeAndFill(stroke, 2.0f, fill);
+                    };
+                    Gizmos.cuboid(box.bounds(), style);
                 }
                 for (RenderLabel label : DeviceSolver.getRenderLabels()) {
                     Vec3 position = Vec3.atCenterOf(label.position());

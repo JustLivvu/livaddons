@@ -40,6 +40,7 @@ public class LivAddonsScreen extends Screen {
     private boolean melodyAlertExpanded;
     private boolean clickGuiExpanded;
     private boolean copyChatExpanded;
+    private boolean highlightsExpanded;
     private int colorTarget;
     private boolean bold;
     private boolean italic;
@@ -188,6 +189,36 @@ public class LivAddonsScreen extends Screen {
                 }
             }
             return super.mouseClicked(event, consumed);
+        }
+
+        int dungeonsX = categories[1].x;
+        int highlightsY = categories[1].y + 24;
+        if (categories[1].open && inside(mouseX, mouseY, dungeonsX, highlightsY, panelWidth, 22)) {
+            if (event.button() == 0) {
+                FeatureSettings.setHighlightsEnabled(!FeatureSettings.highlightsEnabled());
+                return true;
+            }
+            if (event.button() == 1) {
+                highlightsExpanded = !highlightsExpanded;
+                return true;
+            }
+        }
+        if (categories[1].open && highlightsExpanded && event.button() == 0) {
+            int controlX = dungeonsX + 6;
+            int controlY = highlightsY + 26;
+            if (inside(mouseX, mouseY, controlX, controlY, panelWidth - 12, 18)) {
+                FeatureSettings.setHighlightsStyle((FeatureSettings.highlightsStyle() + 1) % 3);
+                return true;
+            }
+            for (int channel = 0; channel < 3; channel++) {
+                int sliderY = controlY + 22 + channel * 22;
+                if (inside(mouseX, mouseY, controlX, sliderY, panelWidth - 12, 18)) {
+                    int value = (int) Math.round(Math.max(0, Math.min(1,
+                            (mouseX - controlX) / (panelWidth - 12.0))) * 255);
+                    setHighlightColorChannel(channel, value);
+                    return true;
+                }
+            }
         }
 
         int x = miscX();
@@ -454,6 +485,31 @@ public class LivAddonsScreen extends Screen {
             return;
         }
 
+        if (category.name.equals("Dungeons")) {
+            int moduleY = y + 24;
+            boolean enabled = FeatureSettings.highlightsEnabled();
+            graphics.fill(x, moduleY, x + panelWidth, moduleY + 22, ROW);
+            graphics.fill(x, moduleY, x + 2, moduleY + 22,
+                    enabled ? FeatureSettings.guiAccent() : 0xFF343640);
+            graphics.text(font, Component.literal("Highlights"), x + 7, moduleY + 8,
+                    enabled ? 0xFFFFFFFF : TEXT_MUTED);
+            graphics.text(font, Component.literal(highlightsExpanded ? "-" : "+"),
+                    x + panelWidth - 12, moduleY + 8, TEXT_MUTED);
+            if (highlightsExpanded) {
+                graphics.fill(x, moduleY + 22, x + panelWidth, moduleY + 114, FeatureSettings.guiBody());
+                int controlY = moduleY + 26;
+                renderButton(graphics, x + 6, controlY, panelWidth - 12, highlightStyleName());
+                int color = FeatureSettings.highlightsColor();
+                renderRgbSlider(graphics, x + 6, controlY + 22, panelWidth - 12,
+                        "R", (color >> 16) & 255, 0xFFFF5555);
+                renderRgbSlider(graphics, x + 6, controlY + 44, panelWidth - 12,
+                        "G", (color >> 8) & 255, 0xFF55FF55);
+                renderRgbSlider(graphics, x + 6, controlY + 66, panelWidth - 12,
+                        "B", color & 255, 0xFF5599FF);
+            }
+            return;
+        }
+
         if (category.name.equals("Floor 7")) {
             int moduleY = y + 24;
             boolean moduleHover = inside(mouseX, mouseY, x, moduleY, panelWidth, 22);
@@ -639,6 +695,25 @@ public class LivAddonsScreen extends Screen {
         };
     }
 
+    private String highlightStyleName() {
+        return switch (FeatureSettings.highlightsStyle()) {
+            case 0 -> "Filled";
+            case 2 -> "Filled Outline";
+            default -> "Outline";
+        };
+    }
+
+    private void setHighlightColorChannel(int channel, int value) {
+        int color = FeatureSettings.highlightsColor();
+        int red = (color >> 16) & 255;
+        int green = (color >> 8) & 255;
+        int blue = color & 255;
+        if (channel == 0) red = value;
+        else if (channel == 1) green = value;
+        else blue = value;
+        FeatureSettings.setHighlightsColor((red << 16) | (green << 8) | blue);
+    }
+
     private boolean matchesSearch(String moduleName) {
         return searchField == null || searchField.getValue().isBlank()
                 || moduleName.toLowerCase().contains(searchField.getValue().trim().toLowerCase());
@@ -651,6 +726,7 @@ public class LivAddonsScreen extends Screen {
     private String[] modulesFor(String category) {
         return switch (category) {
             case "General" -> new String[]{"Copy Chat"};
+            case "Dungeons" -> new String[]{"Highlights"};
             case "Floor 7" -> new String[]{"Terminal Waypoints", "Terminal Solver", "Device Solver",
                     "Melody Alert", "Terminals GUI"};
             case "Render" -> new String[]{"Disable Fire"};
@@ -666,6 +742,7 @@ public class LivAddonsScreen extends Screen {
     private boolean moduleEnabled(String module) {
         return switch (module) {
             case "Copy Chat" -> FeatureSettings.copyChatEnabled();
+            case "Highlights" -> FeatureSettings.highlightsEnabled();
             case "Terminal Waypoints" -> FeatureSettings.terminalWaypointsEnabled();
             case "Terminal Solver" -> FeatureSettings.terminalSolverEnabled();
             case "Device Solver" -> FeatureSettings.deviceSolverEnabled();
@@ -680,6 +757,7 @@ public class LivAddonsScreen extends Screen {
     private void activateSearchResult(String module) {
         switch (module) {
             case "Copy Chat" -> FeatureSettings.setCopyChatEnabled(!FeatureSettings.copyChatEnabled());
+            case "Highlights" -> FeatureSettings.setHighlightsEnabled(!FeatureSettings.highlightsEnabled());
             case "Terminal Waypoints" ->
                     FeatureSettings.setTerminalWaypointsEnabled(!FeatureSettings.terminalWaypointsEnabled());
             case "Terminal Solver" ->

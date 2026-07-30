@@ -23,6 +23,9 @@ public final class FeatureSettings {
     private static boolean disableFire;
     private static boolean copyChat;
     private static int copyChatMode;
+    private static boolean highlights;
+    private static int highlightsColor = 0xFFFFFFFF;
+    private static int highlightsStyle = 1;
 
     private FeatureSettings() {
     }
@@ -92,6 +95,15 @@ public final class FeatureSettings {
         copyChatMode = Math.max(0, Math.min(2, value));
         save();
     }
+    public static boolean highlightsEnabled() { return highlights; }
+    public static void setHighlightsEnabled(boolean value) { highlights = value; save(); }
+    public static int highlightsColor() { return highlightsColor; }
+    public static void setHighlightsColor(int value) { highlightsColor = 0xFF000000 | (value & 0xFFFFFF); save(); }
+    public static int highlightsStyle() { return highlightsStyle; }
+    public static void setHighlightsStyle(int value) {
+        highlightsStyle = Math.max(0, Math.min(2, value));
+        save();
+    }
     public static void setGuiColors(String accent, String header, String body) {
         guiAccent = parseColor(accent, guiAccent);
         guiHeader = parseColor(header, guiHeader);
@@ -119,6 +131,9 @@ public final class FeatureSettings {
             disableFire = bool(o, "disableFire", false);
             copyChat = bool(o, "copyChat", false);
             if (o.has("copyChatMode")) copyChatMode = Math.max(0, Math.min(2, o.get("copyChatMode").getAsInt()));
+            highlights = bool(o, "highlights", false);
+            if (o.has("highlightsColor")) highlightsColor = o.get("highlightsColor").getAsInt();
+            if (o.has("highlightsStyle")) highlightsStyle = Math.max(0, Math.min(2, o.get("highlightsStyle").getAsInt()));
         } catch (Exception e) {
             System.err.println("[LivAddons] Could not load config: " + e.getMessage());
         }
@@ -141,6 +156,9 @@ public final class FeatureSettings {
             o.addProperty("disableFire", disableFire);
             o.addProperty("copyChat", copyChat);
             o.addProperty("copyChatMode", copyChatMode);
+            o.addProperty("highlights", highlights);
+            o.addProperty("highlightsColor", highlightsColor);
+            o.addProperty("highlightsStyle", highlightsStyle);
             Path path = configPath();
             Files.createDirectories(path.getParent());
             Files.writeString(path, GSON.toJson(o));
