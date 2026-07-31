@@ -38,9 +38,12 @@ public class LivAddonsScreen extends Screen {
     private boolean cosmeticsEnabled;
     private boolean cosmeticsExpanded;
     private boolean melodyAlertExpanded;
+    private boolean terminalsGuiExpanded;
     private boolean clickGuiExpanded;
     private boolean copyChatExpanded;
     private boolean highlightsExpanded;
+    private boolean dungeonMapExpanded;
+    private boolean roomClearExpanded;
     private boolean partyCommandsExpanded;
     private int colorTarget;
     private boolean bold;
@@ -48,6 +51,14 @@ public class LivAddonsScreen extends Screen {
     private float visualHeight = 1.0f;
     private Component status = Component.empty();
     private boolean syncing;
+    private String settingsModule;
+    private String draggedSlider;
+    private int draggedSliderChannel;
+    private boolean draggingSettingsPopup;
+    private int settingsPopupX = -1;
+    private int settingsPopupY = -1;
+    private int settingsDragOffsetX;
+    private int settingsDragOffsetY;
 
     private int firstX;
     private int panelY;
@@ -68,7 +79,7 @@ public class LivAddonsScreen extends Screen {
         cosmeticsEnabled = PlayerDataManager.getInstance().areCosmeticsVisible();
 
         gap = 6;
-        panelWidth = Math.min(112, Math.max(82, (width - 32 - gap * 4) / 5));
+        panelWidth = Math.max(126, Math.min(148, (width - 32 - gap * 4) / 5));
         firstX = (width - (panelWidth * 5 + gap * 4)) / 2;
         panelY = Math.max(18, height / 9);
         for (int i = 0; i < categories.length; i++) {
@@ -147,17 +158,33 @@ public class LivAddonsScreen extends Screen {
     }
 
     private void updateWidgetVisibility() {
-        boolean visible = !isSearching() && categories[4].open && cosmeticsExpanded;
+        boolean visible = !isSearching() && "Cosmetics".equals(settingsModule);
         nickField.visible = visible;
         startColorField.visible = visible;
         endColorField.visible = visible;
-        melodyMessageField.visible = !isSearching() && categories[2].open && melodyAlertExpanded;
+        melodyMessageField.visible = !isSearching() && "Melody Alert".equals(settingsModule);
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean consumed) {
         double mouseX = event.x();
         double mouseY = event.y();
+
+        if (settingsModule != null) {
+            int px = popupX() + 12, py = popupY() + 38;
+            boolean textField = ("Melody Alert".equals(settingsModule) && inside(mouseX, mouseY, px, py, 256, 18))
+                    || ("Cosmetics".equals(settingsModule) && (inside(mouseX, mouseY, px, py, 256, 18)
+                    || inside(mouseX, mouseY, px, py + 31, 256, 18)
+                    || inside(mouseX, mouseY, px, py + 53, 256, 18)));
+            if (textField) return super.mouseClicked(event, consumed);
+            if (event.button() == 0 && inside(mouseX, mouseY, popupX(), popupY(), 252, 28)) {
+                draggingSettingsPopup = true;
+                settingsDragOffsetX = popupX() - (int) mouseX;
+                settingsDragOffsetY = popupY() - (int) mouseY;
+                return true;
+            }
+            return handleSettingsPopupClick(mouseX, mouseY, event.button());
+        }
 
         for (int i = 0; i < categories.length; i++) {
             Category category = categories[i];
@@ -190,6 +217,23 @@ public class LivAddonsScreen extends Screen {
                 }
             }
             return super.mouseClicked(event, consumed);
+        }
+
+        for (Category category : categories) {
+            if (!category.open) continue;
+            int rowY = category.y + 24;
+            for (String module : modulesFor(category.name)) {
+                if (inside(mouseX, mouseY, category.x, rowY, panelWidth, 22)) {
+                    if (event.button() == 1 && hasSettings(module)) {
+                        settingsModule = module;
+                        clearLegacyExpansions();
+                        repositionSettingFields();
+                        updateWidgetVisibility();
+                    } else if (event.button() == 0) activateSearchResult(module);
+                    return true;
+                }
+                rowY += 22;
+            }
         }
 
         int dungeonsX = categories[1].x;
@@ -237,6 +281,40 @@ public class LivAddonsScreen extends Screen {
         if (categories[1].open && inside(mouseX, mouseY, dungeonsX, leapAlertY, panelWidth, 22)
                 && event.button() == 0) {
             FeatureSettings.setLeapAlertEnabled(!FeatureSettings.leapAlertEnabled());
+            return true;
+        }
+        int dungeonMapY = leapAlertY + 22;
+        if (categories[1].open && inside(mouseX, mouseY, dungeonsX, dungeonMapY, panelWidth, 22)) {
+            if (event.button() == 0) FeatureSettings.setDungeonMapEnabled(!FeatureSettings.dungeonMapEnabled());
+            else if (event.button() == 1) dungeonMapExpanded = !dungeonMapExpanded;
+            return true;
+        }
+        if (categories[1].open && dungeonMapExpanded && event.button() == 0) {
+            int controlX = dungeonsX + 6;
+            int scaleY = dungeonMapY + 26;
+            if (inside(mouseX, mouseY, controlX, scaleY, panelWidth - 12, 18)) {
+                double progress = Math.max(0, Math.min(1, (mouseX - controlX) / (panelWidth - 12.0)));
+                FeatureSettings.setDungeonMapScale(50 + (int) Math.round(progress * 150));
+                return true;
+            }
+            if (inside(mouseX, mouseY, controlX, scaleY + 22, panelWidth - 12, 18)) {
+                FeatureSettings.setDungeonMapSpinny(!FeatureSettings.dungeonMapSpinny());
+                return true;
+            }
+            if (inside(mouseX, mouseY, controlX, scaleY + 44, panelWidth - 12, 18)) {
+                FeatureSettings.setDungeonMapClearBackground(!FeatureSettings.dungeonMapClearBackground());
+                return true;
+            }
+        }
+        int roomClearY = dungeonMapY + 22 + (dungeonMapExpanded ? 70 : 0);
+        if (categories[1].open && inside(mouseX, mouseY, dungeonsX, roomClearY, panelWidth, 22)) {
+            if (event.button() == 0) FeatureSettings.setRoomClearEnabled(!FeatureSettings.roomClearEnabled());
+            else if (event.button() == 1) roomClearExpanded = !roomClearExpanded;
+            return true;
+        }
+        if (categories[1].open && roomClearExpanded && event.button() == 0
+                && inside(mouseX, mouseY, dungeonsX + 6, roomClearY + 26, panelWidth - 12, 18)) {
+            FeatureSettings.setRoomClearMode((FeatureSettings.roomClearMode() + 1) % 3);
             return true;
         }
 
@@ -291,14 +369,22 @@ public class LivAddonsScreen extends Screen {
         }
         if (categories[2].open && matchesSearch("Terminals GUI")
                 && inside(mouseX, mouseY, floorX,
-                floorModuleY + 88 + (melodyAlertExpanded ? 36 : 0), panelWidth, 22)
-                && event.button() == 0) {
-            FeatureSettings.setTerminalsGuiEnabled(!FeatureSettings.terminalsGuiEnabled());
+                floorModuleY + 88 + (melodyAlertExpanded ? 36 : 0), panelWidth, 22)) {
+            if (event.button() == 0)
+                FeatureSettings.setTerminalsGuiEnabled(!FeatureSettings.terminalsGuiEnabled());
+            else if (event.button() == 1) terminalsGuiExpanded = !terminalsGuiExpanded;
+            return true;
+        }
+        int terminalsSettingsY = floorModuleY + 114 + (melodyAlertExpanded ? 36 : 0);
+        if (categories[2].open && terminalsGuiExpanded && event.button() == 0
+                && inside(mouseX, mouseY, floorX + 6, terminalsSettingsY, panelWidth - 12, 18)) {
+            FeatureSettings.setTerminalsGuiClearBackground(!FeatureSettings.terminalsGuiClearBackground());
             return true;
         }
         if (categories[2].open && matchesSearch("3x3 Highlights")
                 && inside(mouseX, mouseY, floorX,
-                floorModuleY + 110 + (melodyAlertExpanded ? 36 : 0), panelWidth, 22)
+                floorModuleY + 110 + (melodyAlertExpanded ? 36 : 0)
+                        + (terminalsGuiExpanded ? 26 : 0), panelWidth, 22)
                 && event.button() == 0) {
             FeatureSettings.setThreeByThreeHighlightsEnabled(
                     !FeatureSettings.threeByThreeHighlightsEnabled());
@@ -423,7 +509,24 @@ public class LivAddonsScreen extends Screen {
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
         draggedCategory = null;
+        draggedSlider = null;
+        draggingSettingsPopup = false;
         return super.mouseReleased(event);
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (draggingSettingsPopup) {
+            settingsPopupX = Math.max(0, Math.min(width - 280, (int) event.x() + settingsDragOffsetX));
+            settingsPopupY = Math.max(0, Math.min(height - 28, (int) event.y() + settingsDragOffsetY));
+            repositionSettingFields();
+            return true;
+        }
+        if (draggedSlider != null) {
+            updateDraggedSlider(event.x());
+            return true;
+        }
+        return super.mouseDragged(event, dragX, dragY);
     }
 
     private boolean inside(double mouseX, double mouseY, int x, int y, int w, int h) {
@@ -474,13 +577,11 @@ public class LivAddonsScreen extends Screen {
         for (int i = 0; i < categories.length; i++) {
             renderCategory(graphics, categories[i], mouseX, mouseY);
         }
-
-        if (categories[4].open && cosmeticsExpanded) renderCosmeticSettings(graphics);
+        if (settingsModule != null) renderSettingsPopup(graphics);
         super.extractRenderState(graphics, mouseX, mouseY, delta);
 
-        if (categories[4].open && cosmeticsExpanded && !status.getString().isEmpty()) {
-            graphics.centeredText(font, status, miscX() + panelWidth / 2,
-                    miscY() + 261, 0xFFFFFFFF);
+        if ("Cosmetics".equals(settingsModule) && !status.getString().isEmpty()) {
+            graphics.centeredText(font, status, width / 2, popupY() + 260, 0xFFFFFFFF);
         }
     }
 
@@ -520,6 +621,8 @@ public class LivAddonsScreen extends Screen {
             return;
         }
 
+        if (renderFlatModules(graphics, category, mouseX, mouseY)) return;
+
         if (category.name.equals("General")) {
             int moduleY = y + 24;
             boolean enabled = FeatureSettings.copyChatEnabled();
@@ -531,7 +634,7 @@ public class LivAddonsScreen extends Screen {
             graphics.text(font, Component.literal(copyChatExpanded ? "-" : "+"),
                     x + panelWidth - 12, moduleY + 8, TEXT_MUTED);
             if (copyChatExpanded) {
-                graphics.fill(x, moduleY + 22, x + panelWidth, moduleY + 48, FeatureSettings.guiBody());
+                renderSettingsCard(graphics, x, moduleY + 22, panelWidth, 26);
                 renderButton(graphics, x + 6, moduleY + 26, panelWidth - 12, copyChatModeName());
             }
             int partyY = moduleY + 22 + (copyChatExpanded ? 26 : 0);
@@ -558,9 +661,7 @@ public class LivAddonsScreen extends Screen {
                             settingEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
                     graphics.text(font, Component.literal(labels[i]), x + 6, rowY + 4,
                             settingEnabled ? 0xFFFFFFFF : TEXT_MUTED);
-                    graphics.text(font, Component.literal(settingEnabled ? "ON" : "OFF"),
-                            x + panelWidth - 21, rowY + 4,
-                            settingEnabled ? FeatureSettings.guiAccent() : 0xFF686A74);
+                    renderMiniSwitch(graphics, x + panelWidth - 34, rowY + 2, settingEnabled);
                 }
             }
             return;
@@ -577,7 +678,7 @@ public class LivAddonsScreen extends Screen {
             graphics.text(font, Component.literal(highlightsExpanded ? "-" : "+"),
                     x + panelWidth - 12, moduleY + 8, TEXT_MUTED);
             if (highlightsExpanded) {
-                graphics.fill(x, moduleY + 22, x + panelWidth, moduleY + 114, FeatureSettings.guiBody());
+                renderSettingsCard(graphics, x, moduleY + 22, panelWidth, 92);
                 int controlY = moduleY + 26;
                 renderButton(graphics, x + 6, controlY, panelWidth - 12, highlightStyleName());
                 int color = FeatureSettings.highlightsColor();
@@ -609,6 +710,43 @@ public class LivAddonsScreen extends Screen {
                     leapEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
             graphics.text(font, Component.literal("Leap Alert"), x + 7, leapY + 8,
                     leapEnabled ? 0xFFFFFFFF : TEXT_MUTED);
+            int mapY = leapY + 22;
+            boolean mapEnabled = FeatureSettings.dungeonMapEnabled();
+            graphics.fill(x, mapY, x + panelWidth, mapY + 22, ROW);
+            graphics.fill(x, mapY, x + 2, mapY + 22,
+                    mapEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
+            graphics.text(font, Component.literal("Dungeon Map"), x + 7, mapY + 8,
+                    mapEnabled ? 0xFFFFFFFF : TEXT_MUTED);
+            graphics.text(font, Component.literal(dungeonMapExpanded ? "-" : "+"),
+                    x + panelWidth - 12, mapY + 8, TEXT_MUTED);
+            if (dungeonMapExpanded) {
+                renderSettingsCard(graphics, x, mapY + 22, panelWidth, 70);
+                int controlY = mapY + 26;
+                renderScaleSlider(graphics, x + 6, controlY, panelWidth - 12);
+                int spinY = controlY + 22;
+                graphics.fill(x + 6, spinY, x + panelWidth - 6, spinY + 18, 0xFF202128);
+                graphics.text(font, Component.literal("Spinny"), x + 12, spinY + 6, 0xFFFFFFFF);
+                renderMiniSwitch(graphics, x + panelWidth - 38, spinY + 4,
+                        FeatureSettings.dungeonMapSpinny());
+                int clearBgY = controlY + 44;
+                graphics.fill(x + 6, clearBgY, x + panelWidth - 6, clearBgY + 18, 0xFF202128);
+                graphics.text(font, Component.literal("Clear Background"), x + 12, clearBgY + 6, 0xFFFFFFFF);
+                renderMiniSwitch(graphics, x + panelWidth - 38, clearBgY + 4,
+                        FeatureSettings.dungeonMapClearBackground());
+            }
+            int clearY = mapY + 22 + (dungeonMapExpanded ? 70 : 0);
+            boolean clearEnabled = FeatureSettings.roomClearEnabled();
+            graphics.fill(x, clearY, x + panelWidth, clearY + 22, ROW);
+            graphics.fill(x, clearY, x + 2, clearY + 22,
+                    clearEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
+            graphics.text(font, Component.literal("Room Clear"), x + 7, clearY + 8,
+                    clearEnabled ? 0xFFFFFFFF : TEXT_MUTED);
+            graphics.text(font, Component.literal(roomClearExpanded ? "-" : "+"),
+                    x + panelWidth - 12, clearY + 8, TEXT_MUTED);
+            if (roomClearExpanded) {
+                renderSettingsCard(graphics, x, clearY + 22, panelWidth, 26);
+                renderButton(graphics, x + 6, clearY + 26, panelWidth - 12, roomClearModeName());
+            }
             return;
         }
 
@@ -644,7 +782,7 @@ public class LivAddonsScreen extends Screen {
             graphics.text(font, Component.literal(melodyAlertExpanded ? "-" : "+"),
                     x + panelWidth - 12, melodyY + 8, TEXT_MUTED);
             if (melodyAlertExpanded) {
-                graphics.fill(x, melodyY + 22, x + panelWidth, melodyY + 58, FeatureSettings.guiBody());
+                renderSettingsCard(graphics, x, melodyY + 22, panelWidth, 36);
                 graphics.text(font, Component.literal("Message"), x + 6, melodyY + 26, TEXT_MUTED);
             }
             int terminalsY = melodyY + 22 + (melodyAlertExpanded ? 36 : 0);
@@ -654,7 +792,17 @@ public class LivAddonsScreen extends Screen {
                     terminalsEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
             graphics.text(font, Component.literal("Terminals GUI"), x + 7, terminalsY + 8,
                     terminalsEnabled ? 0xFFFFFFFF : TEXT_MUTED);
-            int threeByThreeY = terminalsY + 22;
+            graphics.text(font, Component.literal(terminalsGuiExpanded ? "-" : "+"),
+                    x + panelWidth - 12, terminalsY + 8, TEXT_MUTED);
+            if (terminalsGuiExpanded) {
+                renderSettingsCard(graphics, x, terminalsY + 22, panelWidth, 26);
+                int clearY = terminalsY + 26;
+                graphics.fill(x + 6, clearY, x + panelWidth - 6, clearY + 18, 0xFF202128);
+                graphics.text(font, Component.literal("Clear Background"), x + 12, clearY + 6, 0xFFFFFFFF);
+                renderMiniSwitch(graphics, x + panelWidth - 38, clearY + 4,
+                        FeatureSettings.terminalsGuiClearBackground());
+            }
+            int threeByThreeY = terminalsY + 22 + (terminalsGuiExpanded ? 26 : 0);
             boolean threeByThreeEnabled = FeatureSettings.threeByThreeHighlightsEnabled();
             graphics.fill(x, threeByThreeY, x + panelWidth, threeByThreeY + 22, ROW);
             graphics.fill(x, threeByThreeY, x + 2, threeByThreeY + 22,
@@ -692,7 +840,7 @@ public class LivAddonsScreen extends Screen {
 
         int cosmeticsExtra = cosmeticsExpanded ? 234 : 0;
         if (cosmeticsExpanded)
-            graphics.fill(x, moduleY + 22, x + panelWidth, moduleY + 22 + cosmeticsExtra, FeatureSettings.guiBody());
+            renderSettingsCard(graphics, x, moduleY + 22, panelWidth, cosmeticsExtra);
         int clickGuiY = moduleY + 22 + cosmeticsExtra;
         graphics.fill(x, clickGuiY, x + panelWidth, clickGuiY + 22, ROW);
         graphics.text(font, Component.literal("Click GUI"), x + 7, clickGuiY + 8, 0xFFFFFFFF);
@@ -703,7 +851,7 @@ public class LivAddonsScreen extends Screen {
         graphics.fill(x, positionsY, x + panelWidth, positionsY + 22, ROW);
         graphics.text(font, Component.literal("GUI Positions"), x + 7, positionsY + 8, 0xFFFFFFFF);
         if (clickGuiExpanded) {
-            graphics.fill(x, clickGuiY + 22, x + panelWidth, clickGuiY + 22 + clickExtra, FeatureSettings.guiBody());
+            renderSettingsCard(graphics, x, clickGuiY + 22, panelWidth, clickExtra);
             int controlY = clickGuiY + 26;
             String target = switch (colorTarget) { case 1 -> "Header"; case 2 -> "Body"; default -> "Accent"; };
             renderButton(graphics, x + 6, controlY, panelWidth - 12, target);
@@ -712,6 +860,153 @@ public class LivAddonsScreen extends Screen {
             renderRgbSlider(graphics, x + 6, controlY + 44, panelWidth - 12, "G", (color >> 8) & 255, 0xFF55FF55);
             renderRgbSlider(graphics, x + 6, controlY + 66, panelWidth - 12, "B", color & 255, 0xFF5599FF);
         }
+    }
+
+    private boolean renderFlatModules(GuiGraphicsExtractor graphics, Category category, int mouseX, int mouseY) {
+        int rowY = category.y + 24;
+        for (String module : modulesFor(category.name)) {
+            boolean enabled = moduleEnabled(module);
+            boolean hovered = inside(mouseX, mouseY, category.x, rowY, panelWidth, 22);
+            graphics.fill(category.x, rowY, category.x + panelWidth, rowY + 22, hovered ? 0xFF22242D : ROW);
+            graphics.fill(category.x, rowY, category.x + 2, rowY + 22,
+                    enabled ? FeatureSettings.guiAccent() : 0xFF343640);
+            graphics.text(font, Component.literal(displayModuleName(module)), category.x + 7, rowY + 8,
+                    enabled ? 0xFFFFFFFF : TEXT_MUTED);
+            rowY += 22;
+        }
+        return true;
+    }
+
+    private int popupX() { return settingsPopupX >= 0 ? settingsPopupX : width / 2 - 140; }
+    private int popupY() { return settingsPopupY >= 0 ? settingsPopupY : Math.max(22, height / 2 - 135); }
+
+    private void renderSettingsPopup(GuiGraphicsExtractor graphics) {
+        int x = popupX(), y = popupY(), w = 280;
+        int h = "Party Commands".equals(settingsModule) ? 286 : "Cosmetics".equals(settingsModule) ? 276 : 150;
+        graphics.fill(x, y, x + w, y + h, 0xFC111219);
+        graphics.fill(x, y, x + w, y + 28, FeatureSettings.guiHeader());
+        graphics.fill(x, y + 26, x + w, y + 28, FeatureSettings.guiAccent());
+        graphics.text(font, Component.literal(settingsModule + " Settings").withStyle(ChatFormatting.BOLD),
+                x + 10, y + 10, 0xFFFFFFFF);
+        graphics.text(font, Component.literal("×"), x + w - 17, y + 9, TEXT_MUTED);
+        int cx = x + 12, cy = y + 38, cw = w - 24;
+        switch (settingsModule) {
+            case "Copy Chat" -> renderButton(graphics, cx, cy, cw, copyChatModeName());
+            case "Highlights" -> {
+                renderButton(graphics, cx, cy, cw, highlightStyleName());
+                int c = FeatureSettings.highlightsColor();
+                renderRgbSlider(graphics, cx, cy + 24, cw, "R", (c >> 16) & 255, 0xFFFF5555);
+                renderRgbSlider(graphics, cx, cy + 52, cw, "G", (c >> 8) & 255, 0xFF55FF55);
+                renderRgbSlider(graphics, cx, cy + 80, cw, "B", c & 255, 0xFF5599FF);
+            }
+            case "Dungeon Map" -> {
+                renderScaleSlider(graphics, cx, cy, cw);
+                renderToggle(graphics, cx, cy + 22, cw, "Spinny", FeatureSettings.dungeonMapSpinny());
+                renderToggle(graphics, cx, cy + 44, cw, "Clear Background", FeatureSettings.dungeonMapClearBackground());
+            }
+            case "Room Clear" -> renderButton(graphics, cx, cy, cw, roomClearModeName());
+            case "Melody Alert" -> graphics.text(font, Component.literal("Party chat message"), cx, cy + 22, TEXT_MUTED);
+            case "Terminals GUI" -> renderToggle(graphics, cx, cy, cw, "Clear Background",
+                    FeatureSettings.terminalsGuiClearBackground());
+            case "Party Commands" -> {
+                String[] keys = partySettingKeys(), labels = partySettingLabels();
+                for (int i = 0; i < keys.length; i++) {
+                    boolean value = i == 0 ? FeatureSettings.partyCommandEmotesEnabled()
+                            : FeatureSettings.partyCommandEnabled(keys[i]);
+                    renderToggle(graphics, cx, cy + i * 14, cw, labels[i], value);
+                }
+            }
+            case "Click GUI" -> {
+                String target = switch (colorTarget) { case 1 -> "Header"; case 2 -> "Body"; default -> "Accent"; };
+                renderButton(graphics, cx, cy, cw, target);
+                int c = selectedGuiColor();
+                renderRgbSlider(graphics, cx, cy + 24, cw, "R", (c >> 16) & 255, 0xFFFF5555);
+                renderRgbSlider(graphics, cx, cy + 52, cw, "G", (c >> 8) & 255, 0xFF55FF55);
+                renderRgbSlider(graphics, cx, cy + 80, cw, "B", c & 255, 0xFF5599FF);
+            }
+            case "Cosmetics" -> {
+                graphics.text(font, Component.literal("Nickname / gradient"), cx, cy + 75, TEXT_MUTED);
+                renderToggle(graphics, cx, cy + 97, cw, "Bold", bold);
+                renderToggle(graphics, cx, cy + 119, cw, "Italic", italic);
+                renderSlider(graphics, cx, cy + 141, cw);
+                renderButton(graphics, cx, cy + 185, cw, "Save & sync");
+            }
+        }
+    }
+
+    private boolean handleSettingsPopupClick(double mx, double my, int button) {
+        int x = popupX(), y = popupY(), w = 280, cx = x + 12, cy = y + 38, cw = w - 24;
+        int h = "Party Commands".equals(settingsModule) ? 286 : "Cosmetics".equals(settingsModule) ? 276 : 150;
+        if (!inside(mx, my, x, y, w, h) || inside(mx, my, x + w - 28, y, 28, 28)) {
+            settingsModule = null; updateWidgetVisibility(); return true;
+        }
+        if (button != 0) return true;
+        switch (settingsModule) {
+            case "Copy Chat" -> { if (inside(mx, my, cx, cy, cw, 18)) FeatureSettings.setCopyChatMode((FeatureSettings.copyChatMode() + 1) % 3); }
+            case "Highlights" -> {
+                if (inside(mx, my, cx, cy, cw, 18)) FeatureSettings.setHighlightsStyle((FeatureSettings.highlightsStyle() + 1) % 3);
+                for (int i = 0; i < 3; i++) if (inside(mx, my, cx, cy + 24 + i * 28, cw, 22)) {
+                    draggedSlider = "highlight"; draggedSliderChannel = i; updateDraggedSlider(mx);
+                }
+            }
+            case "Dungeon Map" -> {
+                if (inside(mx, my, cx, cy, cw, 22)) {
+                    draggedSlider = "dungeon_map"; updateDraggedSlider(mx);
+                }
+                else if (inside(mx, my, cx, cy + 22, cw, 18)) FeatureSettings.setDungeonMapSpinny(!FeatureSettings.dungeonMapSpinny());
+                else if (inside(mx, my, cx, cy + 44, cw, 18)) FeatureSettings.setDungeonMapClearBackground(!FeatureSettings.dungeonMapClearBackground());
+            }
+            case "Room Clear" -> { if (inside(mx, my, cx, cy, cw, 18)) FeatureSettings.setRoomClearMode((FeatureSettings.roomClearMode() + 1) % 3); }
+            case "Terminals GUI" -> { if (inside(mx, my, cx, cy, cw, 18)) FeatureSettings.setTerminalsGuiClearBackground(!FeatureSettings.terminalsGuiClearBackground()); }
+            case "Party Commands" -> {
+                for (int i = 0; i < partySettingKeys().length; i++) if (inside(mx, my, cx, cy + i * 14, cw, 14)) {
+                    if (i == 0) FeatureSettings.setPartyCommandEmotesEnabled(!FeatureSettings.partyCommandEmotesEnabled());
+                    else { String key = partySettingKeys()[i]; FeatureSettings.setPartyCommandEnabled(key, !FeatureSettings.partyCommandEnabled(key)); }
+                }
+            }
+            case "Click GUI" -> {
+                if (inside(mx, my, cx, cy, cw, 18)) colorTarget = (colorTarget + 1) % 3;
+                for (int i = 0; i < 3; i++) if (inside(mx, my, cx, cy + 24 + i * 28, cw, 22)) {
+                    draggedSlider = "click_gui"; draggedSliderChannel = i; updateDraggedSlider(mx);
+                }
+            }
+            case "Cosmetics" -> {
+                if (inside(mx, my, cx, cy + 97, cw, 18)) bold = !bold;
+                else if (inside(mx, my, cx, cy + 119, cw, 18)) italic = !italic;
+                else if (inside(mx, my, cx, cy + 141, cw, 24)) {
+                    draggedSlider = "cosmetics"; updateDraggedSlider(mx);
+                }
+                else if (inside(mx, my, cx, cy + 185, cw, 18)) save();
+            }
+        }
+        return true;
+    }
+
+    private int sliderValue(double mouseX, int x, int width, int max) {
+        return (int) Math.round(Math.max(0, Math.min(1, (mouseX - x) / width)) * max);
+    }
+
+    private void updateDraggedSlider(double mouseX) {
+        int x = popupX() + 12, w = 256;
+        switch (draggedSlider) {
+            case "highlight" -> setHighlightColorChannel(draggedSliderChannel, sliderValue(mouseX, x, w, 255));
+            case "click_gui" -> setSelectedColorChannel(draggedSliderChannel, sliderValue(mouseX, x, w, 255));
+            case "dungeon_map" -> FeatureSettings.setDungeonMapScale(50 + sliderValue(mouseX, x, w, 150));
+            case "cosmetics" -> visualHeight = 0.5f + sliderValue(mouseX, x, w, 150) / 100f;
+        }
+    }
+
+    private boolean hasSettings(String module) {
+        return switch (module) {
+            case "Copy Chat", "Party Commands", "Highlights", "Dungeon Map", "Room Clear",
+                    "Melody Alert", "Terminals GUI", "Cosmetics", "Click GUI" -> true;
+            default -> false;
+        };
+    }
+
+    private void clearLegacyExpansions() {
+        cosmeticsExpanded = melodyAlertExpanded = terminalsGuiExpanded = clickGuiExpanded = false;
+        copyChatExpanded = highlightsExpanded = dungeonMapExpanded = roomClearExpanded = partyCommandsExpanded = false;
     }
 
     private void renderCosmeticSettings(GuiGraphicsExtractor graphics) {
@@ -733,23 +1028,32 @@ public class LivAddonsScreen extends Screen {
     }
 
     private void renderToggle(GuiGraphicsExtractor graphics, int x, int y, int width, String label, boolean enabled) {
-        graphics.fill(x, y, x + width, y + 18, enabled ? 0xFF372456 : 0xFF202128);
-        graphics.fill(x, y, x + 2, y + 18, enabled ? FeatureSettings.guiAccent() : 0xFF4B4D58);
         graphics.text(font, Component.literal(label), x + 6, y + 6,
                 enabled ? 0xFFFFFFFF : TEXT_MUTED);
-        String state = enabled ? "ON" : "OFF";
-        graphics.text(font, Component.literal(state), x + width - font.width(state) - 5, y + 6,
-                enabled ? FeatureSettings.guiAccent() : 0xFF686A74);
+        renderMiniSwitch(graphics, x + width - 32, y + 4, enabled);
+    }
+
+    private void renderSettingsCard(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
+        graphics.fill(x + 3, y + 3, x + width + 3, y + height + 3, 0x78000000);
+        graphics.fill(x, y, x + width, y + height, 0xFA15161D);
+        graphics.fill(x, y, x + width, y + 2, FeatureSettings.guiAccent());
+        graphics.fill(x, y, x + 1, y + height, 0xFF30323C);
+        graphics.fill(x + width - 1, y, x + width, y + height, 0xFF30323C);
+    }
+
+    private void renderMiniSwitch(GuiGraphicsExtractor graphics, int x, int y, boolean enabled) {
+        int track = enabled ? FeatureSettings.guiAccent() : 0xFF3B3D47;
+        graphics.fill(x, y, x + 26, y + 10, track);
+        int knobX = enabled ? x + 17 : x + 1;
+        graphics.fill(knobX, y + 1, knobX + 8, y + 9, 0xFFF2F2F4);
     }
 
     private void renderSlider(GuiGraphicsExtractor graphics, int x, int y, int width) {
         double progress = (visualHeight - 0.5) / 1.5;
         int fillWidth = (int) Math.round(width * Math.max(0, Math.min(1, progress)));
-        graphics.fill(x, y, x + width, y + 18, 0xFF202128);
-        graphics.fill(x, y + 16, x + width, y + 18, 0xFF363842);
-        graphics.fill(x, y + 16, x + fillWidth, y + 18, FeatureSettings.guiAccent());
         graphics.text(font, Component.literal(String.format("Scale %.2fx", visualHeight)),
-                x + 6, y + 6, 0xFFD8D9DF);
+                x, y + 4, 0xFFD8D9DF);
+        renderSliderTrack(graphics, x, y + 16, width, fillWidth, FeatureSettings.guiAccent());
     }
 
     private int selectedGuiColor() {
@@ -783,10 +1087,23 @@ public class LivAddonsScreen extends Screen {
     private void renderRgbSlider(GuiGraphicsExtractor graphics, int x, int y, int width,
                                  String label, int value, int sliderColor) {
         int fillWidth = (int) Math.round(width * (value / 255.0));
-        graphics.fill(x, y, x + width, y + 18, 0xFF202128);
-        graphics.fill(x, y + 15, x + width, y + 18, 0xFF363842);
-        graphics.fill(x, y + 15, x + fillWidth, y + 18, sliderColor);
-        graphics.text(font, Component.literal(label + "  " + value), x + 6, y + 6, 0xFFFFFFFF);
+        graphics.text(font, Component.literal(label + "  " + value), x, y + 4, 0xFFFFFFFF);
+        renderSliderTrack(graphics, x, y + 16, width, fillWidth, sliderColor);
+    }
+
+    private void renderScaleSlider(GuiGraphicsExtractor graphics, int x, int y, int width) {
+        int value = FeatureSettings.dungeonMapScale();
+        int fillWidth = (int) Math.round(width * ((value - 50) / 150.0));
+        graphics.text(font, Component.literal("Scale  " + value + "%"), x, y + 4, 0xFFFFFFFF);
+        renderSliderTrack(graphics, x, y + 16, width, fillWidth, FeatureSettings.guiAccent());
+    }
+
+    private void renderSliderTrack(GuiGraphicsExtractor graphics, int x, int y, int width,
+                                   int fillWidth, int color) {
+        graphics.fill(x, y, x + width, y + 3, 0xFF3A3C46);
+        graphics.fill(x, y, x + fillWidth, y + 3, color);
+        int knob = x + Math.max(0, Math.min(width - 6, fillWidth - 3));
+        graphics.fill(knob, y - 2, knob + 6, y + 5, 0xFFFFFFFF);
     }
 
     private void renderButton(GuiGraphicsExtractor graphics, int x, int y, int width, String label) {
@@ -823,6 +1140,14 @@ public class LivAddonsScreen extends Screen {
         };
     }
 
+    private String roomClearModeName() {
+        return switch (FeatureSettings.roomClearMode()) {
+            case 1 -> "Mode: Green";
+            case 2 -> "Mode: White";
+            default -> "Mode: Both";
+        };
+    }
+
     private void setHighlightColorChannel(int channel, int value) {
         int color = FeatureSettings.highlightsColor();
         int red = (color >> 16) & 255;
@@ -846,7 +1171,7 @@ public class LivAddonsScreen extends Screen {
     private String[] modulesFor(String category) {
         return switch (category) {
             case "General" -> new String[]{"Copy Chat", "Party Commands"};
-            case "Dungeons" -> new String[]{"Highlights", "Lava to Water", "Dungeon Finish Song", "Leap Alert"};
+            case "Dungeons" -> new String[]{"Highlights", "Lava to Water", "Diorite To Glass", "Dungeon Finish Song", "Leap Alert", "Dungeon Map", "Room Clear"};
             case "Floor 7" -> new String[]{"Terminal Waypoints", "Terminal Solver", "Device Solver",
                     "Melody Alert", "Terminals GUI", "3x3 Highlights"};
             case "Render" -> new String[]{"Disable Fire"};
@@ -865,8 +1190,11 @@ public class LivAddonsScreen extends Screen {
             case "Party Commands" -> FeatureSettings.partyCommandsEnabled();
             case "Highlights" -> FeatureSettings.highlightsEnabled();
             case "Lava to Water" -> FeatureSettings.lavaToWaterEnabled();
+            case "Diorite To Glass" -> FeatureSettings.dioriteToGlassEnabled();
             case "Dungeon Finish Song" -> FeatureSettings.dungeonFinishSongEnabled();
             case "Leap Alert" -> FeatureSettings.leapAlertEnabled();
+            case "Dungeon Map" -> FeatureSettings.dungeonMapEnabled();
+            case "Room Clear" -> FeatureSettings.roomClearEnabled();
             case "Terminal Waypoints" -> FeatureSettings.terminalWaypointsEnabled();
             case "Terminal Solver" -> FeatureSettings.terminalSolverEnabled();
             case "Device Solver" -> FeatureSettings.deviceSolverEnabled();
@@ -885,9 +1213,12 @@ public class LivAddonsScreen extends Screen {
             case "Party Commands" -> FeatureSettings.setPartyCommandsEnabled(!FeatureSettings.partyCommandsEnabled());
             case "Highlights" -> FeatureSettings.setHighlightsEnabled(!FeatureSettings.highlightsEnabled());
             case "Lava to Water" -> FeatureSettings.setLavaToWaterEnabled(!FeatureSettings.lavaToWaterEnabled());
+            case "Diorite To Glass" -> FeatureSettings.setDioriteToGlassEnabled(!FeatureSettings.dioriteToGlassEnabled());
             case "Dungeon Finish Song" -> FeatureSettings.setDungeonFinishSongEnabled(
                     !FeatureSettings.dungeonFinishSongEnabled());
             case "Leap Alert" -> FeatureSettings.setLeapAlertEnabled(!FeatureSettings.leapAlertEnabled());
+            case "Dungeon Map" -> FeatureSettings.setDungeonMapEnabled(!FeatureSettings.dungeonMapEnabled());
+            case "Room Clear" -> FeatureSettings.setRoomClearEnabled(!FeatureSettings.roomClearEnabled());
             case "Terminal Waypoints" ->
                     FeatureSettings.setTerminalWaypointsEnabled(!FeatureSettings.terminalWaypointsEnabled());
             case "Terminal Solver" ->
@@ -915,16 +1246,21 @@ public class LivAddonsScreen extends Screen {
     }
 
     private void repositionSettingFields() {
-        int x = miscX() + 6;
-        int y = miscY() + 69;
+        int x = popupX() + 12;
+        int y = popupY() + 38;
+        int fieldWidth = 256;
         nickField.setX(x);
         nickField.setY(y);
+        nickField.setWidth(fieldWidth);
         startColorField.setX(x);
         startColorField.setY(y + 31);
+        startColorField.setWidth(fieldWidth);
         endColorField.setX(x);
         endColorField.setY(y + 53);
-        melodyMessageField.setX(categories[2].x + 6);
-        melodyMessageField.setY(categories[2].y + 124);
+        endColorField.setWidth(fieldWidth);
+        melodyMessageField.setX(x);
+        melodyMessageField.setY(y);
+        melodyMessageField.setWidth(fieldWidth);
     }
 
     private static class Category {

@@ -17,6 +17,7 @@ public final class FeatureSettings {
     private static boolean melodyAlert;
     private static String melodyAlertMessage = "[LivAddons] Melody terminal started";
     private static boolean terminalsGui;
+    private static boolean terminalsGuiClearBackground;
     private static int terminalsGuiX = 10;
     private static int terminalsGuiY = 10;
     private static int guiAccent = 0xFF9B5CFF;
@@ -30,10 +31,19 @@ public final class FeatureSettings {
     private static int highlightsStyle = 1;
     private static boolean threeByThreeHighlights;
     private static boolean lavaToWater;
+    private static boolean dioriteToGlass;
     private static boolean dungeonFinishSong;
     private static boolean partyCommands;
     private static boolean partyCommandEmotes;
     private static boolean leapAlert;
+    private static boolean dungeonMap;
+    private static int dungeonMapX = 10;
+    private static int dungeonMapY = 90;
+    private static int dungeonMapScale = 100;
+    private static boolean dungeonMapSpinny;
+    private static boolean dungeonMapClearBackground;
+    private static boolean roomClear;
+    private static int roomClearMode;
     private static final Map<String, Boolean> PARTY_COMMAND_TOGGLES = new LinkedHashMap<>();
 
     static {
@@ -94,6 +104,10 @@ public final class FeatureSettings {
 
     public static boolean terminalsGuiEnabled() { return terminalsGui; }
     public static void setTerminalsGuiEnabled(boolean value) { terminalsGui = value; save(); }
+    public static boolean terminalsGuiClearBackground() { return terminalsGuiClearBackground; }
+    public static void setTerminalsGuiClearBackground(boolean value) {
+        terminalsGuiClearBackground = value; save();
+    }
     public static int terminalsGuiX() { return terminalsGuiX; }
     public static int terminalsGuiY() { return terminalsGuiY; }
     public static void setTerminalsGuiPosition(int x, int y) {
@@ -127,6 +141,8 @@ public final class FeatureSettings {
     }
     public static boolean lavaToWaterEnabled() { return lavaToWater; }
     public static void setLavaToWaterEnabled(boolean value) { lavaToWater = value; save(); }
+    public static boolean dioriteToGlassEnabled() { return dioriteToGlass; }
+    public static void setDioriteToGlassEnabled(boolean value) { dioriteToGlass = value; save(); }
     public static boolean dungeonFinishSongEnabled() { return dungeonFinishSong; }
     public static void setDungeonFinishSongEnabled(boolean value) { dungeonFinishSong = value; save(); }
     public static boolean partyCommandsEnabled() { return partyCommands; }
@@ -135,6 +151,23 @@ public final class FeatureSettings {
     public static void setPartyCommandEmotesEnabled(boolean value) { partyCommandEmotes = value; save(); }
     public static boolean leapAlertEnabled() { return leapAlert; }
     public static void setLeapAlertEnabled(boolean value) { leapAlert = value; save(); }
+    public static boolean dungeonMapEnabled() { return dungeonMap; }
+    public static void setDungeonMapEnabled(boolean value) { dungeonMap = value; save(); }
+    public static int dungeonMapX() { return dungeonMapX; }
+    public static int dungeonMapY() { return dungeonMapY; }
+    public static void setDungeonMapPosition(int x, int y) { dungeonMapX = x; dungeonMapY = y; }
+    public static int dungeonMapScale() { return dungeonMapScale; }
+    public static void setDungeonMapScale(int value) {
+        dungeonMapScale = Math.max(50, Math.min(200, value)); save();
+    }
+    public static boolean dungeonMapSpinny() { return dungeonMapSpinny; }
+    public static void setDungeonMapSpinny(boolean value) { dungeonMapSpinny = value; save(); }
+    public static boolean dungeonMapClearBackground() { return dungeonMapClearBackground; }
+    public static void setDungeonMapClearBackground(boolean value) { dungeonMapClearBackground = value; save(); }
+    public static boolean roomClearEnabled() { return roomClear; }
+    public static void setRoomClearEnabled(boolean value) { roomClear = value; save(); }
+    public static int roomClearMode() { return roomClearMode; }
+    public static void setRoomClearMode(int value) { roomClearMode = Math.max(0, Math.min(2, value)); save(); }
     public static boolean partyCommandEnabled(String command) {
         return PARTY_COMMAND_TOGGLES.getOrDefault(command, true);
     }
@@ -162,6 +195,7 @@ public final class FeatureSettings {
             deviceSolver = bool(o, "deviceSolver", false);
             melodyAlert = bool(o, "melodyAlert", false);
             terminalsGui = bool(o, "terminalsGui", false);
+            terminalsGuiClearBackground = bool(o, "terminalsGuiClearBackground", false);
             if (o.has("melodyAlertMessage")) melodyAlertMessage = o.get("melodyAlertMessage").getAsString();
             if (o.has("terminalsGuiX")) terminalsGuiX = o.get("terminalsGuiX").getAsInt();
             if (o.has("terminalsGuiY")) terminalsGuiY = o.get("terminalsGuiY").getAsInt();
@@ -176,10 +210,19 @@ public final class FeatureSettings {
             if (o.has("highlightsStyle")) highlightsStyle = Math.max(0, Math.min(2, o.get("highlightsStyle").getAsInt()));
             threeByThreeHighlights = bool(o, "threeByThreeHighlights", false);
             lavaToWater = bool(o, "lavaToWater", false);
+            dioriteToGlass = bool(o, "dioriteToGlass", false);
             dungeonFinishSong = bool(o, "dungeonFinishSong", false);
             partyCommands = bool(o, "partyCommands", false);
             partyCommandEmotes = bool(o, "partyCommandEmotes", false);
             leapAlert = bool(o, "leapAlert", false);
+            dungeonMap = bool(o, "dungeonMap", false);
+            if (o.has("dungeonMapX")) dungeonMapX = o.get("dungeonMapX").getAsInt();
+            if (o.has("dungeonMapY")) dungeonMapY = o.get("dungeonMapY").getAsInt();
+            if (o.has("dungeonMapScale")) dungeonMapScale = Math.max(50, Math.min(200, o.get("dungeonMapScale").getAsInt()));
+            dungeonMapSpinny = bool(o, "dungeonMapSpinny", false);
+            dungeonMapClearBackground = bool(o, "dungeonMapClearBackground", false);
+            roomClear = bool(o, "roomClear", false);
+            if (o.has("roomClearMode")) roomClearMode = Math.max(0, Math.min(2, o.get("roomClearMode").getAsInt()));
             if (o.has("partyCommandToggles") && o.get("partyCommandToggles").isJsonObject()) {
                 JsonObject toggles = o.getAsJsonObject("partyCommandToggles");
                 PARTY_COMMAND_TOGGLES.replaceAll((key, oldValue) -> bool(toggles, key, oldValue));
@@ -198,6 +241,7 @@ public final class FeatureSettings {
             o.addProperty("melodyAlert", melodyAlert);
             o.addProperty("melodyAlertMessage", melodyAlertMessage);
             o.addProperty("terminalsGui", terminalsGui);
+            o.addProperty("terminalsGuiClearBackground", terminalsGuiClearBackground);
             o.addProperty("terminalsGuiX", terminalsGuiX);
             o.addProperty("terminalsGuiY", terminalsGuiY);
             o.addProperty("guiAccent", guiAccent);
@@ -211,10 +255,19 @@ public final class FeatureSettings {
             o.addProperty("highlightsStyle", highlightsStyle);
             o.addProperty("threeByThreeHighlights", threeByThreeHighlights);
             o.addProperty("lavaToWater", lavaToWater);
+            o.addProperty("dioriteToGlass", dioriteToGlass);
             o.addProperty("dungeonFinishSong", dungeonFinishSong);
             o.addProperty("partyCommands", partyCommands);
             o.addProperty("partyCommandEmotes", partyCommandEmotes);
             o.addProperty("leapAlert", leapAlert);
+            o.addProperty("dungeonMap", dungeonMap);
+            o.addProperty("dungeonMapX", dungeonMapX);
+            o.addProperty("dungeonMapY", dungeonMapY);
+            o.addProperty("dungeonMapScale", dungeonMapScale);
+            o.addProperty("dungeonMapSpinny", dungeonMapSpinny);
+            o.addProperty("dungeonMapClearBackground", dungeonMapClearBackground);
+            o.addProperty("roomClear", roomClear);
+            o.addProperty("roomClearMode", roomClearMode);
             JsonObject partyToggles = new JsonObject();
             PARTY_COMMAND_TOGGLES.forEach(partyToggles::addProperty);
             o.add("partyCommandToggles", partyToggles);

@@ -59,8 +59,10 @@ public final class TerminalsHud {
         int x = FeatureSettings.terminalsGuiX();
         int y = FeatureSettings.terminalsGuiY();
         int height = 8 + lines.size() * 12;
-        graphics.fill(x, y, x + WIDTH, y + height, FeatureSettings.guiBody());
-        graphics.fill(x, y, x + 3, y + height, FeatureSettings.guiAccent());
+        if (!FeatureSettings.terminalsGuiClearBackground() || preview) {
+            graphics.fill(x, y, x + WIDTH, y + height, FeatureSettings.guiBody());
+            graphics.fill(x, y, x + 3, y + height, FeatureSettings.guiAccent());
+        }
         int lineY = y + 6;
         for (TerminalWaypoints.HudLine line : lines) {
             int color = switch (line.state()) {

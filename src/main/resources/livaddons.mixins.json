@@ -14,7 +14,9 @@
     ,"ArmorStandWaypointMixin",
     "AbstractContainerScreenAccessor",
     "ScreenEffectRendererMixin"
-    ,"FluidRendererMixin"
+    ,"FluidRendererMixin",
+    "ClientPacketListenerMapMixin",
+    "SectionCompilerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -16,6 +16,8 @@ import net.livaddons.feature.TerminalsHud;
 import net.livaddons.feature.LavaToWater;
 import net.livaddons.feature.PartyCommands;
 import net.livaddons.feature.LeapAlert;
+import net.livaddons.feature.DungeonMapHud;
+import net.livaddons.feature.DioriteToGlass;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -35,6 +37,7 @@ public class LivAddonsClient implements ClientModInitializer {
         System.out.println("[LivAddons] Initializing LivAddons Client...");
         FeatureSettings.load();
         TerminalsHud.register();
+        DungeonMapHud.register();
         WorldBoxRenderer.register();
         ClientSendMessageEvents.MODIFY_CHAT.register(PartyCommands::replaceEmotes);
         ClientSendMessageEvents.MODIFY_COMMAND.register(command -> {
@@ -69,6 +72,7 @@ public class LivAddonsClient implements ClientModInitializer {
             PlayerDataManager.getInstance().requestCosmeticDirectory();
             DeviceSolver.tick(client);
             LavaToWater.tick(client);
+            DioriteToGlass.tick(client);
             PartyCommands.tick(client);
             LeapAlert.tick(client);
 
