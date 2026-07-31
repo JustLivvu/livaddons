@@ -129,6 +129,38 @@ public final class TerminalWaypoints {
         return lines;
     }
 
+    public static boolean phaseFourComplete(Minecraft client) {
+        if (client.level == null) return false;
+        for (int i = 21; i < 28; i++) {
+            Waypoint w = WAYPOINTS[i];
+            BlockPos pos = new BlockPos(w.x, w.y, w.z);
+            if (!client.level.hasChunkAt(pos)) return false;
+            boolean inactive = client.level.getEntitiesOfClass(ArmorStand.class,
+                    new net.minecraft.world.phys.AABB(w.x - 3, w.y - 3, w.z - 3,
+                            w.x + 3, w.y + 3, w.z + 3)).stream().anyMatch(stand -> {
+                Component name = stand.getCustomName();
+                return name != null && w.isInactive(name.getString().toLowerCase(Locale.ROOT));
+            });
+            if (inactive) return false;
+        }
+        return true;
+    }
+
+    public static boolean phaseFourHasInactive(Minecraft client) {
+        if (client.level == null) return false;
+        for (int i = 21; i < 28; i++) {
+            Waypoint w = WAYPOINTS[i];
+            boolean inactive = client.level.getEntitiesOfClass(ArmorStand.class,
+                    new net.minecraft.world.phys.AABB(w.x - 3, w.y - 3, w.z - 3,
+                            w.x + 3, w.y + 3, w.z + 3)).stream().anyMatch(stand -> {
+                Component name = stand.getCustomName();
+                return name != null && w.isInactive(name.getString().toLowerCase(Locale.ROOT));
+            });
+            if (inactive) return true;
+        }
+        return false;
+    }
+
     public enum State { HEADER, PENDING, DONE, UNKNOWN }
     public record HudLine(String name, State state) {}
 

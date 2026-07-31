@@ -21,6 +21,7 @@ public final class WorldBoxRenderer {
             boxes.addAll(TerminalWaypoints.collectBoxes(client));
             boxes.addAll(DeviceSolver.getRenderBoxes());
             boxes.addAll(DungeonHighlights.collectBoxes(client));
+            boxes.addAll(ThreeByThreeHighlights.collectBoxes(client));
             try (var ignored = context.levelRenderer().collectPerFrameGizmos()) {
                 for (RenderBox box : boxes) {
                     int rgb = box.color() & 0x00FFFFFF;

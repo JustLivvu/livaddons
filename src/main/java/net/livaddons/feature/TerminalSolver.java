@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 public final class TerminalSolver {
     private static final String[] COLORS = {
             "red", "orange", "yellow", "green", "lime", "blue", "light blue",
-            "cyan", "purple", "magenta", "pink", "white", "gray", "grey", "black", "brown"
+            "cyan", "purple", "magenta", "pink", "white", "silver", "gray", "grey", "black", "brown"
     };
 
     private TerminalSolver() {
@@ -205,6 +205,9 @@ public final class TerminalSolver {
                     "rotten flesh", "wood", "log", "mud", "granite", "dripstone"};
             case "white" -> new String[]{"bone", "quartz", "snow", "sugar", "egg",
                     "feather", "paper", "ghast tear"};
+            case "silver" -> new String[]{"iron", "chainmail", "bucket", "minecart", "cauldron",
+                    "hopper", "anvil", "shears", "rail", "light gray", "clay", "stone",
+                    "cobblestone", "gravel", "flint", "raw iron", "metal"};
             case "gray", "grey" -> new String[]{"iron", "stone", "cobble", "gravel",
                     "flint", "clay", "ash"};
             case "black" -> new String[]{"coal", "obsidian", "ink sac", "wither",

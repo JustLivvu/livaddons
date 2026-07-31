@@ -26,6 +26,7 @@ public final class FeatureSettings {
     private static boolean highlights;
     private static int highlightsColor = 0xFFFFFFFF;
     private static int highlightsStyle = 1;
+    private static boolean threeByThreeHighlights;
 
     private FeatureSettings() {
     }
@@ -104,6 +105,11 @@ public final class FeatureSettings {
         highlightsStyle = Math.max(0, Math.min(2, value));
         save();
     }
+    public static boolean threeByThreeHighlightsEnabled() { return threeByThreeHighlights; }
+    public static void setThreeByThreeHighlightsEnabled(boolean value) {
+        threeByThreeHighlights = value;
+        save();
+    }
     public static void setGuiColors(String accent, String header, String body) {
         guiAccent = parseColor(accent, guiAccent);
         guiHeader = parseColor(header, guiHeader);
@@ -134,6 +140,7 @@ public final class FeatureSettings {
             highlights = bool(o, "highlights", false);
             if (o.has("highlightsColor")) highlightsColor = o.get("highlightsColor").getAsInt();
             if (o.has("highlightsStyle")) highlightsStyle = Math.max(0, Math.min(2, o.get("highlightsStyle").getAsInt()));
+            threeByThreeHighlights = bool(o, "threeByThreeHighlights", false);
         } catch (Exception e) {
             System.err.println("[LivAddons] Could not load config: " + e.getMessage());
         }
@@ -159,6 +166,7 @@ public final class FeatureSettings {
             o.addProperty("highlights", highlights);
             o.addProperty("highlightsColor", highlightsColor);
             o.addProperty("highlightsStyle", highlightsStyle);
+            o.addProperty("threeByThreeHighlights", threeByThreeHighlights);
             Path path = configPath();
             Files.createDirectories(path.getParent());
             Files.writeString(path, GSON.toJson(o));

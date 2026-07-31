@@ -277,6 +277,14 @@ public class LivAddonsScreen extends Screen {
             FeatureSettings.setTerminalsGuiEnabled(!FeatureSettings.terminalsGuiEnabled());
             return true;
         }
+        if (categories[2].open && matchesSearch("3x3 Highlights")
+                && inside(mouseX, mouseY, floorX,
+                floorModuleY + 110 + (melodyAlertExpanded ? 36 : 0), panelWidth, 22)
+                && event.button() == 0) {
+            FeatureSettings.setThreeByThreeHighlightsEnabled(
+                    !FeatureSettings.threeByThreeHighlightsEnabled());
+            return true;
+        }
 
         int generalX = categories[0].x;
         int generalModuleY = categories[0].y + 24;
@@ -552,6 +560,13 @@ public class LivAddonsScreen extends Screen {
                     terminalsEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
             graphics.text(font, Component.literal("Terminals GUI"), x + 7, terminalsY + 8,
                     terminalsEnabled ? 0xFFFFFFFF : TEXT_MUTED);
+            int threeByThreeY = terminalsY + 22;
+            boolean threeByThreeEnabled = FeatureSettings.threeByThreeHighlightsEnabled();
+            graphics.fill(x, threeByThreeY, x + panelWidth, threeByThreeY + 22, ROW);
+            graphics.fill(x, threeByThreeY, x + 2, threeByThreeY + 22,
+                    threeByThreeEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
+            graphics.text(font, Component.literal("3x3 Highlights"), x + 7, threeByThreeY + 8,
+                    threeByThreeEnabled ? 0xFFFFFFFF : TEXT_MUTED);
             return;
         }
 
@@ -728,7 +743,7 @@ public class LivAddonsScreen extends Screen {
             case "General" -> new String[]{"Copy Chat"};
             case "Dungeons" -> new String[]{"Highlights"};
             case "Floor 7" -> new String[]{"Terminal Waypoints", "Terminal Solver", "Device Solver",
-                    "Melody Alert", "Terminals GUI"};
+                    "Melody Alert", "Terminals GUI", "3x3 Highlights"};
             case "Render" -> new String[]{"Disable Fire"};
             case "Misc" -> new String[]{"Cosmetics", "Click GUI", "GUI Positions"};
             default -> new String[0];
@@ -748,6 +763,7 @@ public class LivAddonsScreen extends Screen {
             case "Device Solver" -> FeatureSettings.deviceSolverEnabled();
             case "Melody Alert" -> FeatureSettings.melodyAlertEnabled();
             case "Terminals GUI" -> FeatureSettings.terminalsGuiEnabled();
+            case "3x3 Highlights" -> FeatureSettings.threeByThreeHighlightsEnabled();
             case "Disable Fire" -> FeatureSettings.disableFireEnabled();
             case "Cosmetics" -> cosmeticsEnabled;
             default -> true;
@@ -765,6 +781,8 @@ public class LivAddonsScreen extends Screen {
             case "Device Solver" -> FeatureSettings.setDeviceSolverEnabled(!FeatureSettings.deviceSolverEnabled());
             case "Melody Alert" -> FeatureSettings.setMelodyAlertEnabled(!FeatureSettings.melodyAlertEnabled());
             case "Terminals GUI" -> FeatureSettings.setTerminalsGuiEnabled(!FeatureSettings.terminalsGuiEnabled());
+            case "3x3 Highlights" -> FeatureSettings.setThreeByThreeHighlightsEnabled(
+                    !FeatureSettings.threeByThreeHighlightsEnabled());
             case "Disable Fire" -> FeatureSettings.setDisableFireEnabled(!FeatureSettings.disableFireEnabled());
             case "Cosmetics" -> {
                 cosmeticsEnabled = !cosmeticsEnabled;

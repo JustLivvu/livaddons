@@ -1,23 +1,52 @@
 package net.livaddons.feature;
 
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.scores.DisplaySlot;
+import net.minecraft.world.scores.Objective;
 
 import java.util.List;
 
 public final class TerminalsHud {
     public static final int WIDTH = 126;
+    private static final String GOLDOR_START = "[BOSS] Goldor: Who dares trespass into my domain?";
+    private static boolean goldorStarted;
+    private static boolean phaseFourSeenIncomplete;
     private TerminalsHud() {}
 
     public static void register() {
+        ClientReceiveMessageEvents.GAME.register((message, overlay) -> onGameMessage(message));
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("livaddons", "terminals_gui"),
                 (graphics, delta) -> render(graphics, false));
+    }
+
+    private static void onGameMessage(Component message) {
+        if (message.getString().contains(GOLDOR_START)) {
+            goldorStarted = true;
+            phaseFourSeenIncomplete = false;
+        }
     }
 
     public static void render(net.minecraft.client.gui.GuiGraphicsExtractor graphics, boolean preview) {
         if (!preview && !FeatureSettings.terminalsGuiEnabled()) return;
         Minecraft client = Minecraft.getInstance();
+        if (!preview) {
+            if (!isInCatacombs(client)) {
+                goldorStarted = false;
+                phaseFourSeenIncomplete = false;
+                return;
+            }
+            if (!goldorStarted) return;
+            if (TerminalWaypoints.phaseFourHasInactive(client)) phaseFourSeenIncomplete = true;
+            if (phaseFourSeenIncomplete && TerminalWaypoints.phaseFourComplete(client)) {
+                goldorStarted = false;
+                phaseFourSeenIncomplete = false;
+                return;
+            }
+        }
         List<TerminalWaypoints.HudLine> lines = preview
                 ? List.of(
                     new TerminalWaypoints.HudLine("Phase 3", TerminalWaypoints.State.HEADER),
@@ -50,5 +79,12 @@ public final class TerminalsHud {
                     x + 8, lineY, color);
             lineY += 12;
         }
+    }
+
+
+    private static boolean isInCatacombs(Minecraft client) {
+        if (client.level == null) return false;
+        Objective sidebar = client.level.getScoreboard().getDisplayObjective(DisplaySlot.SIDEBAR);
+        return sidebar != null && sidebar.getDisplayName().getString().contains("The Catacombs");
     }
 }
