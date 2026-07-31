@@ -6,6 +6,8 @@ import net.minecraft.client.Minecraft;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public final class FeatureSettings {
     private static final Gson GSON = new Gson();
@@ -29,6 +31,17 @@ public final class FeatureSettings {
     private static boolean threeByThreeHighlights;
     private static boolean lavaToWater;
     private static boolean dungeonFinishSong;
+    private static boolean partyCommands;
+    private static boolean partyCommandEmotes;
+    private static boolean leapAlert;
+    private static final Map<String, Boolean> PARTY_COMMAND_TOGGLES = new LinkedHashMap<>();
+
+    static {
+        for (String command : new String[]{"help", "coords", "cf", "8ball", "dice", "fps", "time",
+                "holding", "warp", "allinvite", "pt", "promote", "demote", "kick", "kickoffline", "boop"}) {
+            PARTY_COMMAND_TOGGLES.put(command, true);
+        }
+    }
 
     private FeatureSettings() {
     }
@@ -116,6 +129,21 @@ public final class FeatureSettings {
     public static void setLavaToWaterEnabled(boolean value) { lavaToWater = value; save(); }
     public static boolean dungeonFinishSongEnabled() { return dungeonFinishSong; }
     public static void setDungeonFinishSongEnabled(boolean value) { dungeonFinishSong = value; save(); }
+    public static boolean partyCommandsEnabled() { return partyCommands; }
+    public static void setPartyCommandsEnabled(boolean value) { partyCommands = value; save(); }
+    public static boolean partyCommandEmotesEnabled() { return partyCommandEmotes; }
+    public static void setPartyCommandEmotesEnabled(boolean value) { partyCommandEmotes = value; save(); }
+    public static boolean leapAlertEnabled() { return leapAlert; }
+    public static void setLeapAlertEnabled(boolean value) { leapAlert = value; save(); }
+    public static boolean partyCommandEnabled(String command) {
+        return PARTY_COMMAND_TOGGLES.getOrDefault(command, true);
+    }
+    public static void setPartyCommandEnabled(String command, boolean value) {
+        if (PARTY_COMMAND_TOGGLES.containsKey(command)) {
+            PARTY_COMMAND_TOGGLES.put(command, value);
+            save();
+        }
+    }
     public static void setGuiColors(String accent, String header, String body) {
         guiAccent = parseColor(accent, guiAccent);
         guiHeader = parseColor(header, guiHeader);
@@ -149,6 +177,13 @@ public final class FeatureSettings {
             threeByThreeHighlights = bool(o, "threeByThreeHighlights", false);
             lavaToWater = bool(o, "lavaToWater", false);
             dungeonFinishSong = bool(o, "dungeonFinishSong", false);
+            partyCommands = bool(o, "partyCommands", false);
+            partyCommandEmotes = bool(o, "partyCommandEmotes", false);
+            leapAlert = bool(o, "leapAlert", false);
+            if (o.has("partyCommandToggles") && o.get("partyCommandToggles").isJsonObject()) {
+                JsonObject toggles = o.getAsJsonObject("partyCommandToggles");
+                PARTY_COMMAND_TOGGLES.replaceAll((key, oldValue) -> bool(toggles, key, oldValue));
+            }
         } catch (Exception e) {
             System.err.println("[LivAddons] Could not load config: " + e.getMessage());
         }
@@ -177,6 +212,12 @@ public final class FeatureSettings {
             o.addProperty("threeByThreeHighlights", threeByThreeHighlights);
             o.addProperty("lavaToWater", lavaToWater);
             o.addProperty("dungeonFinishSong", dungeonFinishSong);
+            o.addProperty("partyCommands", partyCommands);
+            o.addProperty("partyCommandEmotes", partyCommandEmotes);
+            o.addProperty("leapAlert", leapAlert);
+            JsonObject partyToggles = new JsonObject();
+            PARTY_COMMAND_TOGGLES.forEach(partyToggles::addProperty);
+            o.add("partyCommandToggles", partyToggles);
             Path path = configPath();
             Files.createDirectories(path.getParent());
             Files.writeString(path, GSON.toJson(o));

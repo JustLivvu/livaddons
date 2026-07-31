@@ -4,6 +4,8 @@ import net.livaddons.access.ChatCopyAccess;
 import net.livaddons.util.ComponentReplacer;
 import net.livaddons.feature.TerminalsHud;
 import net.livaddons.feature.DungeonFinishSong;
+import net.livaddons.feature.PartyCommands;
+import net.livaddons.feature.LeapAlert;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.network.chat.Component;
@@ -26,6 +28,8 @@ public abstract class ChatComponentMixin implements ChatCopyAccess {
     private Component onAddClientSystemMessage(Component message) {
         TerminalsHud.onGameMessage(message);
         DungeonFinishSong.onChatMessage(message);
+        PartyCommands.onChatMessage(message);
+        LeapAlert.onChatMessage(message);
         return ComponentReplacer.replaceInComponent(message);
     }
 
@@ -33,6 +37,8 @@ public abstract class ChatComponentMixin implements ChatCopyAccess {
     private Component onAddServerSystemMessage(Component message) {
         TerminalsHud.onGameMessage(message);
         DungeonFinishSong.onChatMessage(message);
+        PartyCommands.onChatMessage(message);
+        LeapAlert.onChatMessage(message);
         return ComponentReplacer.replaceInComponent(message);
     }
 
@@ -40,6 +46,8 @@ public abstract class ChatComponentMixin implements ChatCopyAccess {
     private Component onAddPlayerMessage(Component message) {
         TerminalsHud.onGameMessage(message);
         DungeonFinishSong.onChatMessage(message);
+        PartyCommands.onChatMessage(message);
+        LeapAlert.onChatMessage(message);
         return ComponentReplacer.replaceInComponent(message);
     }
 

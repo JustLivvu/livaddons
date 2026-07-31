@@ -14,7 +14,10 @@ import net.livaddons.feature.MelodyAlert;
 import net.livaddons.feature.FeatureSettings;
 import net.livaddons.feature.TerminalsHud;
 import net.livaddons.feature.LavaToWater;
+import net.livaddons.feature.PartyCommands;
+import net.livaddons.feature.LeapAlert;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -33,6 +36,14 @@ public class LivAddonsClient implements ClientModInitializer {
         FeatureSettings.load();
         TerminalsHud.register();
         WorldBoxRenderer.register();
+        ClientSendMessageEvents.MODIFY_CHAT.register(PartyCommands::replaceEmotes);
+        ClientSendMessageEvents.MODIFY_COMMAND.register(command -> {
+            String lower = command.toLowerCase(java.util.Locale.ROOT);
+            if (lower.startsWith("pc ") || lower.startsWith("p chat ") || lower.startsWith("gc ")
+                    || lower.startsWith("ac ") || lower.startsWith("msg ") || lower.startsWith("w ")
+                    || lower.startsWith("r ")) return PartyCommands.replaceEmotes(command);
+            return command;
+        });
 
         ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             MelodyAlert.onScreenOpened(client, screen);
@@ -58,6 +69,8 @@ public class LivAddonsClient implements ClientModInitializer {
             PlayerDataManager.getInstance().requestCosmeticDirectory();
             DeviceSolver.tick(client);
             LavaToWater.tick(client);
+            PartyCommands.tick(client);
+            LeapAlert.tick(client);
 
             tickCounter++;
             if (tickCounter >= 40) {

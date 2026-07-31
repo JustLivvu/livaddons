@@ -41,6 +41,7 @@ public class LivAddonsScreen extends Screen {
     private boolean clickGuiExpanded;
     private boolean copyChatExpanded;
     private boolean highlightsExpanded;
+    private boolean partyCommandsExpanded;
     private int colorTarget;
     private boolean bold;
     private boolean italic;
@@ -232,6 +233,12 @@ public class LivAddonsScreen extends Screen {
             FeatureSettings.setDungeonFinishSongEnabled(!FeatureSettings.dungeonFinishSongEnabled());
             return true;
         }
+        int leapAlertY = finishSongY + 22;
+        if (categories[1].open && inside(mouseX, mouseY, dungeonsX, leapAlertY, panelWidth, 22)
+                && event.button() == 0) {
+            FeatureSettings.setLeapAlertEnabled(!FeatureSettings.leapAlertEnabled());
+            return true;
+        }
 
         int x = miscX();
         int moduleY = miscY() + 24;
@@ -315,6 +322,31 @@ public class LivAddonsScreen extends Screen {
                 && inside(mouseX, mouseY, generalX + 6, generalModuleY + 26, panelWidth - 12, 18)) {
             FeatureSettings.setCopyChatMode((FeatureSettings.copyChatMode() + 1) % 3);
             return true;
+        }
+        int partyCommandsY = generalModuleY + 22 + (copyChatExpanded ? 26 : 0);
+        if (categories[0].open && inside(mouseX, mouseY, generalX, partyCommandsY, panelWidth, 22)) {
+            if (event.button() == 0) {
+                FeatureSettings.setPartyCommandsEnabled(!FeatureSettings.partyCommandsEnabled());
+                return true;
+            }
+            if (event.button() == 1) {
+                partyCommandsExpanded = !partyCommandsExpanded;
+                return true;
+            }
+        }
+        if (categories[0].open && partyCommandsExpanded && event.button() == 0) {
+            int settingY = partyCommandsY + 22;
+            for (int i = 0; i < partySettingKeys().length; i++) {
+                if (inside(mouseX, mouseY, generalX, settingY + i * 14, panelWidth, 14)) {
+                    if (i == 0) {
+                        FeatureSettings.setPartyCommandEmotesEnabled(!FeatureSettings.partyCommandEmotesEnabled());
+                    } else {
+                        String key = partySettingKeys()[i];
+                        FeatureSettings.setPartyCommandEnabled(key, !FeatureSettings.partyCommandEnabled(key));
+                    }
+                    return true;
+                }
+            }
         }
 
         int renderX = categories[3].x;
@@ -502,6 +534,35 @@ public class LivAddonsScreen extends Screen {
                 graphics.fill(x, moduleY + 22, x + panelWidth, moduleY + 48, FeatureSettings.guiBody());
                 renderButton(graphics, x + 6, moduleY + 26, panelWidth - 12, copyChatModeName());
             }
+            int partyY = moduleY + 22 + (copyChatExpanded ? 26 : 0);
+            boolean partyEnabled = FeatureSettings.partyCommandsEnabled();
+            graphics.fill(x, partyY, x + panelWidth, partyY + 22, ROW);
+            graphics.fill(x, partyY, x + 2, partyY + 22,
+                    partyEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
+            graphics.text(font, Component.literal("Party Commands"), x + 7, partyY + 8,
+                    partyEnabled ? 0xFFFFFFFF : TEXT_MUTED);
+            graphics.text(font, Component.literal(partyCommandsExpanded ? "-" : "+"),
+                    x + panelWidth - 12, partyY + 8, TEXT_MUTED);
+            if (partyCommandsExpanded) {
+                String[] keys = partySettingKeys();
+                String[] labels = partySettingLabels();
+                int settingsY = partyY + 22;
+                graphics.fill(x, settingsY, x + panelWidth, settingsY + keys.length * 14,
+                        FeatureSettings.guiBody());
+                for (int i = 0; i < keys.length; i++) {
+                    boolean settingEnabled = i == 0
+                            ? FeatureSettings.partyCommandEmotesEnabled()
+                            : FeatureSettings.partyCommandEnabled(keys[i]);
+                    int rowY = settingsY + i * 14;
+                    graphics.fill(x, rowY, x + 2, rowY + 14,
+                            settingEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
+                    graphics.text(font, Component.literal(labels[i]), x + 6, rowY + 4,
+                            settingEnabled ? 0xFFFFFFFF : TEXT_MUTED);
+                    graphics.text(font, Component.literal(settingEnabled ? "ON" : "OFF"),
+                            x + panelWidth - 21, rowY + 4,
+                            settingEnabled ? FeatureSettings.guiAccent() : 0xFF686A74);
+                }
+            }
             return;
         }
 
@@ -541,6 +602,13 @@ public class LivAddonsScreen extends Screen {
                     finishSongEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
             graphics.text(font, Component.literal("Dungeon Finish Song"), x + 7, finishSongY + 8,
                     finishSongEnabled ? 0xFFFFFFFF : TEXT_MUTED);
+            int leapY = finishSongY + 22;
+            boolean leapEnabled = FeatureSettings.leapAlertEnabled();
+            graphics.fill(x, leapY, x + panelWidth, leapY + 22, ROW);
+            graphics.fill(x, leapY, x + 2, leapY + 22,
+                    leapEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
+            graphics.text(font, Component.literal("Leap Alert"), x + 7, leapY + 8,
+                    leapEnabled ? 0xFFFFFFFF : TEXT_MUTED);
             return;
         }
 
@@ -736,6 +804,17 @@ public class LivAddonsScreen extends Screen {
         };
     }
 
+    private String[] partySettingKeys() {
+        return new String[]{"emotes", "help", "coords", "cf", "8ball", "dice", "fps", "time",
+                "holding", "warp", "allinvite", "pt", "promote", "demote", "kick", "kickoffline", "boop"};
+    }
+
+    private String[] partySettingLabels() {
+        return new String[]{"Enable Emotes", "Help", "Coords", "Coinflip", "8ball", "Dice", "FPS",
+                "Time", "Holding", "Warp", "Allinvite", "Transfer", "Promote", "Demote", "Kick",
+                "Kick Offline", "Boop"};
+    }
+
     private String highlightStyleName() {
         return switch (FeatureSettings.highlightsStyle()) {
             case 0 -> "Filled";
@@ -766,8 +845,8 @@ public class LivAddonsScreen extends Screen {
 
     private String[] modulesFor(String category) {
         return switch (category) {
-            case "General" -> new String[]{"Copy Chat"};
-            case "Dungeons" -> new String[]{"Highlights", "Lava to Water", "Dungeon Finish Song"};
+            case "General" -> new String[]{"Copy Chat", "Party Commands"};
+            case "Dungeons" -> new String[]{"Highlights", "Lava to Water", "Dungeon Finish Song", "Leap Alert"};
             case "Floor 7" -> new String[]{"Terminal Waypoints", "Terminal Solver", "Device Solver",
                     "Melody Alert", "Terminals GUI", "3x3 Highlights"};
             case "Render" -> new String[]{"Disable Fire"};
@@ -783,9 +862,11 @@ public class LivAddonsScreen extends Screen {
     private boolean moduleEnabled(String module) {
         return switch (module) {
             case "Copy Chat" -> FeatureSettings.copyChatEnabled();
+            case "Party Commands" -> FeatureSettings.partyCommandsEnabled();
             case "Highlights" -> FeatureSettings.highlightsEnabled();
             case "Lava to Water" -> FeatureSettings.lavaToWaterEnabled();
             case "Dungeon Finish Song" -> FeatureSettings.dungeonFinishSongEnabled();
+            case "Leap Alert" -> FeatureSettings.leapAlertEnabled();
             case "Terminal Waypoints" -> FeatureSettings.terminalWaypointsEnabled();
             case "Terminal Solver" -> FeatureSettings.terminalSolverEnabled();
             case "Device Solver" -> FeatureSettings.deviceSolverEnabled();
@@ -801,10 +882,12 @@ public class LivAddonsScreen extends Screen {
     private void activateSearchResult(String module) {
         switch (module) {
             case "Copy Chat" -> FeatureSettings.setCopyChatEnabled(!FeatureSettings.copyChatEnabled());
+            case "Party Commands" -> FeatureSettings.setPartyCommandsEnabled(!FeatureSettings.partyCommandsEnabled());
             case "Highlights" -> FeatureSettings.setHighlightsEnabled(!FeatureSettings.highlightsEnabled());
             case "Lava to Water" -> FeatureSettings.setLavaToWaterEnabled(!FeatureSettings.lavaToWaterEnabled());
             case "Dungeon Finish Song" -> FeatureSettings.setDungeonFinishSongEnabled(
                     !FeatureSettings.dungeonFinishSongEnabled());
+            case "Leap Alert" -> FeatureSettings.setLeapAlertEnabled(!FeatureSettings.leapAlertEnabled());
             case "Terminal Waypoints" ->
                     FeatureSettings.setTerminalWaypointsEnabled(!FeatureSettings.terminalWaypointsEnabled());
             case "Terminal Solver" ->
