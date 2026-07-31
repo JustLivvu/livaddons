@@ -220,6 +220,18 @@ public class LivAddonsScreen extends Screen {
                 }
             }
         }
+        int lavaToWaterY = highlightsY + 22 + (highlightsExpanded ? 92 : 0);
+        if (categories[1].open && inside(mouseX, mouseY, dungeonsX, lavaToWaterY, panelWidth, 22)
+                && event.button() == 0) {
+            FeatureSettings.setLavaToWaterEnabled(!FeatureSettings.lavaToWaterEnabled());
+            return true;
+        }
+        int finishSongY = lavaToWaterY + 22;
+        if (categories[1].open && inside(mouseX, mouseY, dungeonsX, finishSongY, panelWidth, 22)
+                && event.button() == 0) {
+            FeatureSettings.setDungeonFinishSongEnabled(!FeatureSettings.dungeonFinishSongEnabled());
+            return true;
+        }
 
         int x = miscX();
         int moduleY = miscY() + 24;
@@ -515,6 +527,20 @@ public class LivAddonsScreen extends Screen {
                 renderRgbSlider(graphics, x + 6, controlY + 66, panelWidth - 12,
                         "B", color & 255, 0xFF5599FF);
             }
+            int lavaY = moduleY + 22 + (highlightsExpanded ? 92 : 0);
+            boolean lavaEnabled = FeatureSettings.lavaToWaterEnabled();
+            graphics.fill(x, lavaY, x + panelWidth, lavaY + 22, ROW);
+            graphics.fill(x, lavaY, x + 2, lavaY + 22,
+                    lavaEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
+            graphics.text(font, Component.literal("Lava to Water"), x + 7, lavaY + 8,
+                    lavaEnabled ? 0xFFFFFFFF : TEXT_MUTED);
+            int finishSongY = lavaY + 22;
+            boolean finishSongEnabled = FeatureSettings.dungeonFinishSongEnabled();
+            graphics.fill(x, finishSongY, x + panelWidth, finishSongY + 22, ROW);
+            graphics.fill(x, finishSongY, x + 2, finishSongY + 22,
+                    finishSongEnabled ? FeatureSettings.guiAccent() : 0xFF343640);
+            graphics.text(font, Component.literal("Dungeon Finish Song"), x + 7, finishSongY + 8,
+                    finishSongEnabled ? 0xFFFFFFFF : TEXT_MUTED);
             return;
         }
 
@@ -741,7 +767,7 @@ public class LivAddonsScreen extends Screen {
     private String[] modulesFor(String category) {
         return switch (category) {
             case "General" -> new String[]{"Copy Chat"};
-            case "Dungeons" -> new String[]{"Highlights"};
+            case "Dungeons" -> new String[]{"Highlights", "Lava to Water", "Dungeon Finish Song"};
             case "Floor 7" -> new String[]{"Terminal Waypoints", "Terminal Solver", "Device Solver",
                     "Melody Alert", "Terminals GUI", "3x3 Highlights"};
             case "Render" -> new String[]{"Disable Fire"};
@@ -758,6 +784,8 @@ public class LivAddonsScreen extends Screen {
         return switch (module) {
             case "Copy Chat" -> FeatureSettings.copyChatEnabled();
             case "Highlights" -> FeatureSettings.highlightsEnabled();
+            case "Lava to Water" -> FeatureSettings.lavaToWaterEnabled();
+            case "Dungeon Finish Song" -> FeatureSettings.dungeonFinishSongEnabled();
             case "Terminal Waypoints" -> FeatureSettings.terminalWaypointsEnabled();
             case "Terminal Solver" -> FeatureSettings.terminalSolverEnabled();
             case "Device Solver" -> FeatureSettings.deviceSolverEnabled();
@@ -774,6 +802,9 @@ public class LivAddonsScreen extends Screen {
         switch (module) {
             case "Copy Chat" -> FeatureSettings.setCopyChatEnabled(!FeatureSettings.copyChatEnabled());
             case "Highlights" -> FeatureSettings.setHighlightsEnabled(!FeatureSettings.highlightsEnabled());
+            case "Lava to Water" -> FeatureSettings.setLavaToWaterEnabled(!FeatureSettings.lavaToWaterEnabled());
+            case "Dungeon Finish Song" -> FeatureSettings.setDungeonFinishSongEnabled(
+                    !FeatureSettings.dungeonFinishSongEnabled());
             case "Terminal Waypoints" ->
                     FeatureSettings.setTerminalWaypointsEnabled(!FeatureSettings.terminalWaypointsEnabled());
             case "Terminal Solver" ->

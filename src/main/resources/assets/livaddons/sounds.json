@@ -1,0 +1,7 @@
+{
+  "dungeon_finish": {
+    "sounds": [
+      "livaddons:dungeon_finish"
+    ]
+  }
+}

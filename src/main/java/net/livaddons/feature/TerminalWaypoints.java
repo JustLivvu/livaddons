@@ -161,6 +161,16 @@ public final class TerminalWaypoints {
         return false;
     }
 
+    public static boolean isPlayerNearPhaseFour(Minecraft client) {
+        if (client.player == null) return false;
+        double closest = Double.MAX_VALUE;
+        for (int i = 21; i < 28; i++) {
+            Waypoint w = WAYPOINTS[i];
+            closest = Math.min(closest, client.player.distanceToSqr(w.x, w.y, w.z));
+        }
+        return closest <= 2500.0;
+    }
+
     public enum State { HEADER, PENDING, DONE, UNKNOWN }
     public record HudLine(String name, State state) {}
 

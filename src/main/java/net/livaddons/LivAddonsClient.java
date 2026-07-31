@@ -13,6 +13,7 @@ import net.livaddons.feature.WorldBoxRenderer;
 import net.livaddons.feature.MelodyAlert;
 import net.livaddons.feature.FeatureSettings;
 import net.livaddons.feature.TerminalsHud;
+import net.livaddons.feature.LavaToWater;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.Minecraft;
@@ -56,6 +57,7 @@ public class LivAddonsClient implements ClientModInitializer {
 
             PlayerDataManager.getInstance().requestCosmeticDirectory();
             DeviceSolver.tick(client);
+            LavaToWater.tick(client);
 
             tickCounter++;
             if (tickCounter >= 40) {

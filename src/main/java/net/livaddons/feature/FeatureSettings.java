@@ -27,6 +27,8 @@ public final class FeatureSettings {
     private static int highlightsColor = 0xFFFFFFFF;
     private static int highlightsStyle = 1;
     private static boolean threeByThreeHighlights;
+    private static boolean lavaToWater;
+    private static boolean dungeonFinishSong;
 
     private FeatureSettings() {
     }
@@ -110,6 +112,10 @@ public final class FeatureSettings {
         threeByThreeHighlights = value;
         save();
     }
+    public static boolean lavaToWaterEnabled() { return lavaToWater; }
+    public static void setLavaToWaterEnabled(boolean value) { lavaToWater = value; save(); }
+    public static boolean dungeonFinishSongEnabled() { return dungeonFinishSong; }
+    public static void setDungeonFinishSongEnabled(boolean value) { dungeonFinishSong = value; save(); }
     public static void setGuiColors(String accent, String header, String body) {
         guiAccent = parseColor(accent, guiAccent);
         guiHeader = parseColor(header, guiHeader);
@@ -141,6 +147,8 @@ public final class FeatureSettings {
             if (o.has("highlightsColor")) highlightsColor = o.get("highlightsColor").getAsInt();
             if (o.has("highlightsStyle")) highlightsStyle = Math.max(0, Math.min(2, o.get("highlightsStyle").getAsInt()));
             threeByThreeHighlights = bool(o, "threeByThreeHighlights", false);
+            lavaToWater = bool(o, "lavaToWater", false);
+            dungeonFinishSong = bool(o, "dungeonFinishSong", false);
         } catch (Exception e) {
             System.err.println("[LivAddons] Could not load config: " + e.getMessage());
         }
@@ -167,6 +175,8 @@ public final class FeatureSettings {
             o.addProperty("highlightsColor", highlightsColor);
             o.addProperty("highlightsStyle", highlightsStyle);
             o.addProperty("threeByThreeHighlights", threeByThreeHighlights);
+            o.addProperty("lavaToWater", lavaToWater);
+            o.addProperty("dungeonFinishSong", dungeonFinishSong);
             Path path = configPath();
             Files.createDirectories(path.getParent());
             Files.writeString(path, GSON.toJson(o));

@@ -2,6 +2,8 @@ package net.livaddons.mixin;
 
 import net.livaddons.access.ChatCopyAccess;
 import net.livaddons.util.ComponentReplacer;
+import net.livaddons.feature.TerminalsHud;
+import net.livaddons.feature.DungeonFinishSong;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.network.chat.Component;
@@ -22,16 +24,22 @@ public abstract class ChatComponentMixin implements ChatCopyAccess {
 
     @ModifyVariable(method = "addClientSystemMessage", at = @At("HEAD"), argsOnly = true)
     private Component onAddClientSystemMessage(Component message) {
+        TerminalsHud.onGameMessage(message);
+        DungeonFinishSong.onChatMessage(message);
         return ComponentReplacer.replaceInComponent(message);
     }
 
     @ModifyVariable(method = "addServerSystemMessage", at = @At("HEAD"), argsOnly = true)
     private Component onAddServerSystemMessage(Component message) {
+        TerminalsHud.onGameMessage(message);
+        DungeonFinishSong.onChatMessage(message);
         return ComponentReplacer.replaceInComponent(message);
     }
 
     @ModifyVariable(method = "addPlayerMessage", at = @At("HEAD"), argsOnly = true)
     private Component onAddPlayerMessage(Component message) {
+        TerminalsHud.onGameMessage(message);
+        DungeonFinishSong.onChatMessage(message);
         return ComponentReplacer.replaceInComponent(message);
     }
 

@@ -5,8 +5,6 @@ import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.scores.DisplaySlot;
-import net.minecraft.world.scores.Objective;
 
 import java.util.List;
 
@@ -23,7 +21,7 @@ public final class TerminalsHud {
                 (graphics, delta) -> render(graphics, false));
     }
 
-    private static void onGameMessage(Component message) {
+    public static void onGameMessage(Component message) {
         if (message.getString().contains(GOLDOR_START)) {
             goldorStarted = true;
             phaseFourSeenIncomplete = false;
@@ -35,16 +33,18 @@ public final class TerminalsHud {
         Minecraft client = Minecraft.getInstance();
         if (!preview) {
             if (!isInCatacombs(client)) {
-                goldorStarted = false;
-                phaseFourSeenIncomplete = false;
+                // Hypixel briefly rebuilds the sidebar between Goldor phases.
+                // Keep the run state so the HUD can return without another boss message.
                 return;
             }
             if (!goldorStarted) return;
-            if (TerminalWaypoints.phaseFourHasInactive(client)) phaseFourSeenIncomplete = true;
-            if (phaseFourSeenIncomplete && TerminalWaypoints.phaseFourComplete(client)) {
-                goldorStarted = false;
-                phaseFourSeenIncomplete = false;
-                return;
+            if (TerminalWaypoints.isPlayerNearPhaseFour(client)) {
+                if (TerminalWaypoints.phaseFourHasInactive(client)) phaseFourSeenIncomplete = true;
+                if (phaseFourSeenIncomplete && TerminalWaypoints.phaseFourComplete(client)) {
+                    goldorStarted = false;
+                    phaseFourSeenIncomplete = false;
+                    return;
+                }
             }
         }
         List<TerminalWaypoints.HudLine> lines = preview
@@ -83,8 +83,6 @@ public final class TerminalsHud {
 
 
     private static boolean isInCatacombs(Minecraft client) {
-        if (client.level == null) return false;
-        Objective sidebar = client.level.getScoreboard().getDisplayObjective(DisplaySlot.SIDEBAR);
-        return sidebar != null && sidebar.getDisplayName().getString().contains("The Catacombs");
+        return ScoreboardUtils.sidebarContains(client, "catacombs");
     }
 }
