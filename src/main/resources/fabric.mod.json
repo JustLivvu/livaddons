@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "livaddons",
+  "name": "LivAddons",
+  "version": "${version}",
+  "description": "A Hypixel SkyBlock dungeon utility mod designed to improve the overall gameplay experience with helpful quality-of-life features, extensive customization, and player cosmetics.",
+  "authors": [
+    "Liv"
+  ],
+  "contact": {
+    "homepage": "https://github.com/justlivvu/livaddons",
+    "sources": "https://github.com/justlivvu/livaddons",
+    "issues": "https://github.com/justlivvu/livaddons/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/livaddons/icon.webp",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.livaddons.LivAddonsMod"
+    ],
+    "client": [
+      "net.livaddons.LivAddonsClient"
+    ]
+  },
+  "mixins": [
+    "livaddons.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": ">=1.20",
+    "java": ">=21"
+  }
+}

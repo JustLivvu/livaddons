@@ -1,0 +1,24 @@
+{
+  "required": true,
+  "package": "net.livaddons.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [],
+  "client": [
+    "AvatarRenderStateMixin",
+    "PlayerRendererMixin",
+    "PlayerNametagMixin",
+    "ChatComponentMixin",
+    "ChatScreenMixin",
+    "ItemStackMixin",
+    "PlayerTabOverlayMixin"
+    ,"ArmorStandWaypointMixin",
+    "AbstractContainerScreenAccessor",
+    "ScreenEffectRendererMixin"
+    ,"FluidRendererMixin",
+    "ClientPacketListenerMapMixin",
+    "SectionCompilerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

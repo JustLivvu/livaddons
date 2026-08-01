@@ -1,0 +1,121 @@
+package net.livaddons.data;
+
+import net.livaddons.net.ApiClient;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class PlayerDataManager {
+    private static final PlayerDataManager INSTANCE = new PlayerDataManager();
+
+    private final Map<UUID, PlayerCosmeticData> cache = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> lastFetchTime = new ConcurrentHashMap<>();
+    private final Set<UUID> pendingFetch = ConcurrentHashMap.newKeySet();
+    private volatile boolean directoryFetchPending;
+    private volatile long lastDirectoryFetchTime;
+    private volatile boolean cosmeticsVisible = true;
+    private static final long CACHE_TTL_MS = 15000;
+    private static final long DIRECTORY_TTL_MS = 30000;
+
+    public static PlayerDataManager getInstance() {
+        return INSTANCE;
+    }
+
+    public PlayerCosmeticData getCosmeticData(UUID uuid) {
+        if (!cosmeticsVisible) return null;
+        return getCachedCosmeticData(uuid);
+    }
+
+    public PlayerCosmeticData getCachedCosmeticData(UUID uuid) {
+        if (uuid == null) return null;
+        return cache.get(uuid);
+    }
+
+    public boolean areCosmeticsVisible() {
+        return cosmeticsVisible;
+    }
+
+    public void setCosmeticsVisible(boolean visible) {
+        cosmeticsVisible = visible;
+    }
+
+    public void updateCache(PlayerCosmeticData data) {
+        if (data != null && data.uuid != null && !data.uuid.isEmpty()) {
+            try {
+                UUID uuid = UUID.fromString(data.uuid);
+                cache.put(uuid, data);
+                lastFetchTime.put(uuid, System.currentTimeMillis());
+            } catch (IllegalArgumentException ignored) {}
+        }
+    }
+
+    public void requestFetchIfMissing(UUID uuid) {
+        long now = System.currentTimeMillis();
+        if (uuid == null || pendingFetch.contains(uuid)) {
+            return;
+        }
+        if (cache.containsKey(uuid) && (now - lastFetchTime.getOrDefault(uuid, 0L)) < CACHE_TTL_MS) {
+            return;
+        }
+
+        pendingFetch.add(uuid);
+        ApiClient.fetchProfile(uuid).thenAccept(data -> {
+            pendingFetch.remove(uuid);
+            if (data != null) {
+                try {
+                    UUID u = UUID.fromString(data.uuid);
+                    cache.put(u, data);
+                    lastFetchTime.put(u, System.currentTimeMillis());
+                } catch (Exception ignored) {}
+            }
+        });
+    }
+
+    public void requestBulkFetch(List<UUID> uuids) {
+        if (uuids == null || uuids.isEmpty()) return;
+
+        long now = System.currentTimeMillis();
+        List<UUID> toFetch = uuids.stream()
+                .filter(u -> !pendingFetch.contains(u))
+                .filter(u -> !cache.containsKey(u) || (now - lastFetchTime.getOrDefault(u, 0L)) >= CACHE_TTL_MS)
+                .toList();
+
+        if (toFetch.isEmpty()) return;
+
+        pendingFetch.addAll(toFetch);
+        ApiClient.fetchBulkProfiles(toFetch).thenAccept(map -> {
+            pendingFetch.removeAll(toFetch);
+            if (map != null) {
+                cache.putAll(map);
+                long fetchNow = System.currentTimeMillis();
+                for (UUID u : map.keySet()) {
+                    lastFetchTime.put(u, fetchNow);
+                }
+            }
+        });
+    }
+
+    public void requestCosmeticDirectory() {
+        long now = System.currentTimeMillis();
+        if (directoryFetchPending || now - lastDirectoryFetchTime < DIRECTORY_TTL_MS) {
+            return;
+        }
+
+        directoryFetchPending = true;
+        ApiClient.fetchAllProfiles().thenAccept(map -> {
+            if (map != null) {
+                cache.putAll(map);
+                long fetchNow = System.currentTimeMillis();
+                for (UUID uuid : map.keySet()) {
+                    lastFetchTime.put(uuid, fetchNow);
+                }
+            }
+            lastDirectoryFetchTime = System.currentTimeMillis();
+            directoryFetchPending = false;
+        });
+    }
+
+    public Collection<PlayerCosmeticData> getAllCosmeticData() {
+        return cosmeticsVisible ? cache.values() : Collections.emptyList();
+    }
+}
