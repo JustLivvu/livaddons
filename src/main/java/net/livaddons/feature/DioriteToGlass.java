@@ -13,8 +13,7 @@ public final class DioriteToGlass {
 
     public static void tick(Minecraft client) {
         boolean next = FeatureSettings.dioriteToGlassEnabled()
-                && client.level != null
-                && ScoreboardUtils.sidebarContains(client, "catacombs");
+                && client.level != null;
         if (next != active) {
             active = next;
             if (client.level != null) client.levelRenderer.allChanged();

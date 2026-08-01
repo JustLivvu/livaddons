@@ -14,8 +14,7 @@ public final class LavaToWater {
 
     public static void tick(Minecraft client) {
         boolean active = FeatureSettings.lavaToWaterEnabled()
-                && client.level != null
-                && ScoreboardUtils.sidebarContains(client, "catacombs");
+                && client.level != null;
         if (active != lastActive) {
             lastActive = active;
             if (client.level != null) client.levelRenderer.allChanged();

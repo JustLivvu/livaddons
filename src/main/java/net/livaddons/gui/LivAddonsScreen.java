@@ -11,13 +11,9 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
-<<<<<<< HEAD
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
-=======
-import net.minecraft.network.chat.Component;
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,11 +37,8 @@ public class LivAddonsScreen extends Screen {
     private EditBox endColorField;
     private EditBox melodyMessageField;
     private EditBox searchField;
-<<<<<<< HEAD
     private final List<EditBox> commandFields = new ArrayList<>();
     private int capturingCommandKey = -1;
-=======
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
     private boolean cosmeticsEnabled;
     private boolean cosmeticsExpanded;
     private boolean melodyAlertExpanded;
@@ -137,11 +130,8 @@ public class LivAddonsScreen extends Screen {
         searchField.setResponder(value -> updateWidgetVisibility());
         addRenderableWidget(searchField);
 
-<<<<<<< HEAD
         rebuildCommandFields();
 
-=======
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
         updateWidgetVisibility();
     }
 
@@ -179,7 +169,6 @@ public class LivAddonsScreen extends Screen {
         startColorField.visible = visible;
         endColorField.visible = visible;
         melodyMessageField.visible = !isSearching() && "Melody Alert".equals(settingsModule);
-<<<<<<< HEAD
         boolean commandFieldsVisible = !isSearching() && "Command Keybinds".equals(settingsModule);
         for (EditBox field : commandFields) field.visible = commandFieldsVisible;
     }
@@ -202,8 +191,6 @@ public class LivAddonsScreen extends Screen {
         }
         repositionSettingFields();
         updateWidgetVisibility();
-=======
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
     }
 
     @Override
@@ -216,13 +203,9 @@ public class LivAddonsScreen extends Screen {
             boolean textField = ("Melody Alert".equals(settingsModule) && inside(mouseX, mouseY, px, py, 256, 18))
                     || ("Cosmetics".equals(settingsModule) && (inside(mouseX, mouseY, px, py, 256, 18)
                     || inside(mouseX, mouseY, px, py + 31, 256, 18)
-<<<<<<< HEAD
                     || inside(mouseX, mouseY, px, py + 53, 256, 18)))
                     || ("Command Keybinds".equals(settingsModule) && commandFields.stream()
                     .anyMatch(field -> inside(mouseX, mouseY, field.getX(), field.getY(), field.getWidth(), 18)));
-=======
-                    || inside(mouseX, mouseY, px, py + 53, 256, 18)));
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
             if (textField) return super.mouseClicked(event, consumed);
             if (event.button() == 0 && inside(mouseX, mouseY, popupX(), popupY(), 252, 28)) {
                 draggingSettingsPopup = true;
@@ -554,7 +537,6 @@ public class LivAddonsScreen extends Screen {
     }
 
     @Override
-<<<<<<< HEAD
     public boolean keyPressed(KeyEvent event) {
         if (capturingCommandKey >= 0 && capturingCommandKey < FeatureSettings.commandKeybinds().size()) {
             int key = event.key();
@@ -568,8 +550,6 @@ public class LivAddonsScreen extends Screen {
     }
 
     @Override
-=======
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
     public boolean mouseReleased(MouseButtonEvent event) {
         draggedCategory = null;
         draggedSlider = null;
@@ -945,21 +925,16 @@ public class LivAddonsScreen extends Screen {
 
     private void renderSettingsPopup(GuiGraphicsExtractor graphics) {
         int x = popupX(), y = popupY(), w = 280;
-<<<<<<< HEAD
         int h = popupHeight();
-=======
-        int h = "Party Commands".equals(settingsModule) ? 286 : "Cosmetics".equals(settingsModule) ? 276 : 150;
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
         graphics.fill(x, y, x + w, y + h, 0xFC111219);
         graphics.fill(x, y, x + w, y + 28, FeatureSettings.guiHeader());
         graphics.fill(x, y + 26, x + w, y + 28, FeatureSettings.guiAccent());
         graphics.text(font, Component.literal(settingsModule + " Settings").withStyle(ChatFormatting.BOLD),
                 x + 10, y + 10, 0xFFFFFFFF);
-        graphics.text(font, Component.literal("×"), x + w - 17, y + 9, TEXT_MUTED);
+        graphics.text(font, Component.literal("Ã—"), x + w - 17, y + 9, TEXT_MUTED);
         int cx = x + 12, cy = y + 38, cw = w - 24;
         switch (settingsModule) {
             case "Copy Chat" -> renderButton(graphics, cx, cy, cw, copyChatModeName());
-<<<<<<< HEAD
             case "Command Keybinds" -> {
                 renderButton(graphics, cx, cy, cw, "+ Add keybind");
                 for (int i = 0; i < FeatureSettings.commandKeybinds().size(); i++) {
@@ -970,11 +945,9 @@ public class LivAddonsScreen extends Screen {
                     graphics.fill(cx + cw - 18, rowY, cx + cw, rowY + 18, 0xFF50535B);
                     graphics.fill(cx + cw - 17, rowY + 1, cx + cw - 1, rowY + 17, 0xFF292B31);
                     graphics.fill(cx + cw - 16, rowY + 2, cx + cw - 2, rowY + 3, 0xFF3B3E45);
-                    graphics.centeredText(font, Component.literal("×"), cx + cw - 9, rowY + 5, 0xFFB5B7BE);
+                    graphics.centeredText(font, Component.literal("Ã—"), cx + cw - 9, rowY + 5, 0xFFB5B7BE);
                 }
             }
-=======
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
             case "Highlights" -> {
                 renderButton(graphics, cx, cy, cw, highlightStyleName());
                 int c = FeatureSettings.highlightsColor();
@@ -1019,20 +992,13 @@ public class LivAddonsScreen extends Screen {
 
     private boolean handleSettingsPopupClick(double mx, double my, int button) {
         int x = popupX(), y = popupY(), w = 280, cx = x + 12, cy = y + 38, cw = w - 24;
-<<<<<<< HEAD
         int h = popupHeight();
         if (!inside(mx, my, x, y, w, h) || inside(mx, my, x + w - 28, y, 28, 28)) {
             settingsModule = null; capturingCommandKey = -1; updateWidgetVisibility(); return true;
-=======
-        int h = "Party Commands".equals(settingsModule) ? 286 : "Cosmetics".equals(settingsModule) ? 276 : 150;
-        if (!inside(mx, my, x, y, w, h) || inside(mx, my, x + w - 28, y, 28, 28)) {
-            settingsModule = null; updateWidgetVisibility(); return true;
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
         }
         if (button != 0) return true;
         switch (settingsModule) {
             case "Copy Chat" -> { if (inside(mx, my, cx, cy, cw, 18)) FeatureSettings.setCopyChatMode((FeatureSettings.copyChatMode() + 1) % 3); }
-<<<<<<< HEAD
             case "Command Keybinds" -> {
                 if (inside(mx, my, cx, cy, cw, 18)) {
                     FeatureSettings.addCommandKeybind();
@@ -1054,8 +1020,6 @@ public class LivAddonsScreen extends Screen {
                     }
                 }
             }
-=======
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
             case "Highlights" -> {
                 if (inside(mx, my, cx, cy, cw, 18)) FeatureSettings.setHighlightsStyle((FeatureSettings.highlightsStyle() + 1) % 3);
                 for (int i = 0; i < 3; i++) if (inside(mx, my, cx, cy + 24 + i * 28, cw, 22)) {
@@ -1111,11 +1075,7 @@ public class LivAddonsScreen extends Screen {
 
     private boolean hasSettings(String module) {
         return switch (module) {
-<<<<<<< HEAD
             case "Copy Chat", "Command Keybinds", "Party Commands", "Highlights", "Dungeon Map", "Room Clear",
-=======
-            case "Copy Chat", "Party Commands", "Highlights", "Dungeon Map", "Room Clear",
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
                     "Melody Alert", "Terminals GUI", "Cosmetics", "Click GUI" -> true;
             default -> false;
         };
@@ -1224,7 +1184,6 @@ public class LivAddonsScreen extends Screen {
     }
 
     private void renderButton(GuiGraphicsExtractor graphics, int x, int y, int width, String label) {
-<<<<<<< HEAD
         int body = syncing ? 0xFF24262B : 0xFF303238;
         int edge = syncing ? 0xFF383A40 : 0xFF50535B;
         graphics.fill(x + 1, y + 2, x + width + 1, y + 19, 0x52000000);
@@ -1233,12 +1192,6 @@ public class LivAddonsScreen extends Screen {
         graphics.fill(x + 2, y + 2, x + width - 2, y + 3, syncing ? 0xFF303238 : 0xFF3B3E45);
         graphics.centeredText(font, Component.literal(syncing ? "Syncing..." : label),
                 x + width / 2, y + 5, syncing ? 0xFF777981 : 0xFFD2D3D7);
-=======
-        graphics.fill(x, y, x + width, y + 18, syncing ? 0xFF383943 : ACCENT_DARK);
-        graphics.fill(x, y, x + width, y + 1, syncing ? 0xFF555762 : FeatureSettings.guiAccent());
-        graphics.centeredText(font, Component.literal(syncing ? "Syncing..." : label),
-                x + width / 2, y + 6, syncing ? TEXT_MUTED : 0xFFFFFFFF);
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
     }
 
     private String copyChatModeName() {
@@ -1298,11 +1251,7 @@ public class LivAddonsScreen extends Screen {
 
     private String[] modulesFor(String category) {
         return switch (category) {
-<<<<<<< HEAD
             case "General" -> new String[]{"Copy Chat", "Command Keybinds", "Party Commands"};
-=======
-            case "General" -> new String[]{"Copy Chat", "Party Commands"};
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
             case "Dungeons" -> new String[]{"Highlights", "Lava to Water", "Diorite To Glass", "Dungeon Finish Song", "Leap Alert", "Dungeon Map", "Room Clear"};
             case "Floor 7" -> new String[]{"Terminal Waypoints", "Terminal Solver", "Device Solver",
                     "Melody Alert", "Terminals GUI", "3x3 Highlights"};
@@ -1342,15 +1291,12 @@ public class LivAddonsScreen extends Screen {
     private void activateSearchResult(String module) {
         switch (module) {
             case "Copy Chat" -> FeatureSettings.setCopyChatEnabled(!FeatureSettings.copyChatEnabled());
-<<<<<<< HEAD
             case "Command Keybinds" -> {
                 settingsModule = "Command Keybinds";
                 clearLegacyExpansions();
                 repositionSettingFields();
                 updateWidgetVisibility();
             }
-=======
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
             case "Party Commands" -> FeatureSettings.setPartyCommandsEnabled(!FeatureSettings.partyCommandsEnabled());
             case "Highlights" -> FeatureSettings.setHighlightsEnabled(!FeatureSettings.highlightsEnabled());
             case "Lava to Water" -> FeatureSettings.setLavaToWaterEnabled(!FeatureSettings.lavaToWaterEnabled());
@@ -1402,7 +1348,6 @@ public class LivAddonsScreen extends Screen {
         melodyMessageField.setX(x);
         melodyMessageField.setY(y);
         melodyMessageField.setWidth(fieldWidth);
-<<<<<<< HEAD
         for (int i = 0; i < commandFields.size(); i++) {
             EditBox field = commandFields.get(i);
             field.setX(x + 76);
@@ -1434,8 +1379,6 @@ public class LivAddonsScreen extends Screen {
             default -> keyCode >= GLFW.GLFW_KEY_F1 && keyCode <= GLFW.GLFW_KEY_F25
                     ? "F" + (keyCode - GLFW.GLFW_KEY_F1 + 1) : "Key " + keyCode;
         };
-=======
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
     }
 
     private static class Category {

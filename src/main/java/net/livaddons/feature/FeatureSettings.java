@@ -2,22 +2,16 @@ package net.livaddons.feature;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-<<<<<<< HEAD
 import com.google.gson.JsonArray;
-=======
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
 import net.minecraft.client.Minecraft;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
-<<<<<<< HEAD
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-=======
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
 
 public final class FeatureSettings {
     private static final Gson GSON = new Gson();
@@ -55,12 +49,9 @@ public final class FeatureSettings {
     private static boolean roomClear;
     private static int roomClearMode;
     private static final Map<String, Boolean> PARTY_COMMAND_TOGGLES = new LinkedHashMap<>();
-<<<<<<< HEAD
     private static final List<CommandKeybind> COMMAND_KEYBINDS = new ArrayList<>();
 
     public record CommandKeybind(int keyCode, String command) {}
-=======
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
 
     static {
         for (String command : new String[]{"help", "coords", "cf", "8ball", "dice", "fps", "time",
@@ -156,9 +147,17 @@ public final class FeatureSettings {
         save();
     }
     public static boolean lavaToWaterEnabled() { return lavaToWater; }
-    public static void setLavaToWaterEnabled(boolean value) { lavaToWater = value; save(); }
+    public static void setLavaToWaterEnabled(boolean value) {
+        lavaToWater = value;
+        save();
+        refreshWorldRenderer();
+    }
     public static boolean dioriteToGlassEnabled() { return dioriteToGlass; }
-    public static void setDioriteToGlassEnabled(boolean value) { dioriteToGlass = value; save(); }
+    public static void setDioriteToGlassEnabled(boolean value) {
+        dioriteToGlass = value;
+        save();
+        refreshWorldRenderer();
+    }
     public static boolean dungeonFinishSongEnabled() { return dungeonFinishSong; }
     public static void setDungeonFinishSongEnabled(boolean value) { dungeonFinishSong = value; save(); }
     public static boolean partyCommandsEnabled() { return partyCommands; }
@@ -193,7 +192,6 @@ public final class FeatureSettings {
             save();
         }
     }
-<<<<<<< HEAD
     public static List<CommandKeybind> commandKeybinds() {
         return Collections.unmodifiableList(COMMAND_KEYBINDS);
     }
@@ -213,8 +211,6 @@ public final class FeatureSettings {
             save();
         }
     }
-=======
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
     public static void setGuiColors(String accent, String header, String body) {
         guiAccent = parseColor(accent, guiAccent);
         guiHeader = parseColor(header, guiHeader);
@@ -265,7 +261,6 @@ public final class FeatureSettings {
                 JsonObject toggles = o.getAsJsonObject("partyCommandToggles");
                 PARTY_COMMAND_TOGGLES.replaceAll((key, oldValue) -> bool(toggles, key, oldValue));
             }
-<<<<<<< HEAD
             COMMAND_KEYBINDS.clear();
             if (o.has("commandKeybinds") && o.get("commandKeybinds").isJsonArray()) {
                 for (var element : o.getAsJsonArray("commandKeybinds")) {
@@ -276,8 +271,6 @@ public final class FeatureSettings {
                     COMMAND_KEYBINDS.add(new CommandKeybind(keyCode, command));
                 }
             }
-=======
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
         } catch (Exception e) {
             System.err.println("[LivAddons] Could not load config: " + e.getMessage());
         }
@@ -322,7 +315,6 @@ public final class FeatureSettings {
             JsonObject partyToggles = new JsonObject();
             PARTY_COMMAND_TOGGLES.forEach(partyToggles::addProperty);
             o.add("partyCommandToggles", partyToggles);
-<<<<<<< HEAD
             JsonArray commandKeybinds = new JsonArray();
             for (CommandKeybind binding : COMMAND_KEYBINDS) {
                 JsonObject item = new JsonObject();
@@ -331,8 +323,6 @@ public final class FeatureSettings {
                 commandKeybinds.add(item);
             }
             o.add("commandKeybinds", commandKeybinds);
-=======
->>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
             Path path = configPath();
             Files.createDirectories(path.getParent());
             Files.writeString(path, GSON.toJson(o));
@@ -343,6 +333,10 @@ public final class FeatureSettings {
 
     private static Path configPath() {
         return Minecraft.getInstance().gameDirectory.toPath().resolve("config").resolve("livaddons.json");
+    }
+    private static void refreshWorldRenderer() {
+        Minecraft client = Minecraft.getInstance();
+        if (client.level != null) client.levelRenderer.allChanged();
     }
     private static boolean bool(JsonObject o, String key, boolean fallback) {
         return o.has(key) ? o.get(key).getAsBoolean() : fallback;

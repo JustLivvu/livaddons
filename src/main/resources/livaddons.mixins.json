@@ -15,8 +15,10 @@
     "AbstractContainerScreenAccessor",
     "ScreenEffectRendererMixin"
     ,"FluidRendererMixin",
+    "SodiumFluidRendererMixin",
     "ClientPacketListenerMapMixin",
-    "SectionCompilerMixin"
+    "SectionCompilerMixin",
+    "SodiumChunkBuilderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

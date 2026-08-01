@@ -1,6 +1,6 @@
 package net.livaddons.mixin;
 
-import net.livaddons.feature.DioriteToGlass;
+import net.livaddons.feature.FeatureSettings;
 import net.minecraft.client.renderer.chunk.RenderSectionRegion;
 import net.minecraft.client.renderer.chunk.SectionCompiler;
 import net.minecraft.core.BlockPos;
@@ -16,7 +16,7 @@ public abstract class SectionCompilerMixin {
             target = "Lnet/minecraft/client/renderer/chunk/RenderSectionRegion;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
     private BlockState livaddons$renderDioriteAsGrayGlass(RenderSectionRegion region, BlockPos pos) {
         BlockState state = region.getBlockState(pos);
-        if (DioriteToGlass.active()
+        if (FeatureSettings.dioriteToGlassEnabled()
                 && (state.is(Blocks.DIORITE) || state.is(Blocks.POLISHED_DIORITE))) {
             return Blocks.GRAY_STAINED_GLASS.defaultBlockState();
         }
