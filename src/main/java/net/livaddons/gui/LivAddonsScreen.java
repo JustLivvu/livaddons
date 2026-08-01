@@ -931,7 +931,7 @@ public class LivAddonsScreen extends Screen {
         graphics.fill(x, y + 26, x + w, y + 28, FeatureSettings.guiAccent());
         graphics.text(font, Component.literal(settingsModule + " Settings").withStyle(ChatFormatting.BOLD),
                 x + 10, y + 10, 0xFFFFFFFF);
-        graphics.text(font, Component.literal("Ã—"), x + w - 17, y + 9, TEXT_MUTED);
+        graphics.text(font, Component.literal("X"), x + w - 17, y + 9, TEXT_MUTED);
         int cx = x + 12, cy = y + 38, cw = w - 24;
         switch (settingsModule) {
             case "Copy Chat" -> renderButton(graphics, cx, cy, cw, copyChatModeName());
@@ -945,7 +945,7 @@ public class LivAddonsScreen extends Screen {
                     graphics.fill(cx + cw - 18, rowY, cx + cw, rowY + 18, 0xFF50535B);
                     graphics.fill(cx + cw - 17, rowY + 1, cx + cw - 1, rowY + 17, 0xFF292B31);
                     graphics.fill(cx + cw - 16, rowY + 2, cx + cw - 2, rowY + 3, 0xFF3B3E45);
-                    graphics.centeredText(font, Component.literal("Ã—"), cx + cw - 9, rowY + 5, 0xFFB5B7BE);
+                    graphics.centeredText(font, Component.literal("X"), cx + cw - 9, rowY + 5, 0xFFB5B7BE);
                 }
             }
             case "Highlights" -> {
