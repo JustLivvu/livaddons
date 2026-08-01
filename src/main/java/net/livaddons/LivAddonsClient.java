@@ -18,7 +18,10 @@ import net.livaddons.feature.PartyCommands;
 import net.livaddons.feature.LeapAlert;
 import net.livaddons.feature.DungeonMapHud;
 import net.livaddons.feature.DioriteToGlass;
+<<<<<<< HEAD
 import net.livaddons.feature.CommandKeybinds;
+=======
+>>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -76,7 +79,10 @@ public class LivAddonsClient implements ClientModInitializer {
             DioriteToGlass.tick(client);
             PartyCommands.tick(client);
             LeapAlert.tick(client);
+<<<<<<< HEAD
             CommandKeybinds.tick(client);
+=======
+>>>>>>> 2e3189537538aa7ef43819de274de2caa2decae7
 
             tickCounter++;
             if (tickCounter >= 40) {
